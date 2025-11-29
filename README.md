@@ -2,7 +2,9 @@
 
 Traditional computer vision lane detection using edge detection, polynomial fitting, and Kalman filtering. Built to demonstrate understanding of CV pipelines without deep learning. 
 
-![Demo](media/out/lane1-straight-processed-vid.mp4.gif)
+![Demo](media/out/lane1-straight-processed-vid.gif)
+
+See full video here: [lane1-straight-processed-vid](https://youtu.be/QkCduVmN1P8)
 
 ## What It Does
 
