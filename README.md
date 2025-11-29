@@ -2,7 +2,7 @@
 
 Traditional computer vision lane detection using edge detection, polynomial fitting, and Kalman filtering. Built to demonstrate understanding of CV pipelines without deep learning. 
 
-![Demo](media/out/lane1-straight-processed.mp4.gif)
+![Demo](media/out/lane1-straight-processed-vid.mp4.gif)
 
 ## What It Does
 
@@ -17,7 +17,8 @@ Detects lane lines in road videos using:
 
 ## Quick Start
 ```bash
-git clones <https://github.com/ShaneTeel/lane-detection.git>
+git clones https://github.com/ShaneTeel/lane-detection-classic.git
+cd lane-detection-classic
 pip install -e .
 python scripts/demo_video.py
 ```

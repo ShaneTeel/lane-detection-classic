@@ -2,7 +2,7 @@ import numpy as np
 from lane_detection.detection import GridSearch
 
 def demo_grid_search():
-    src = "../media/in/lane1-straight.jpg"
+    src = "media/in/lane1-straight.jpg"
 
     roi = np.array([[[100, 540], 
                      [900, 540], 

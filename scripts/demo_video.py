@@ -2,7 +2,7 @@ import numpy as np
 from lane_detection.detection import DetectionSystem
 
 def demo_video():
-    src = "../media/in/lane1-straight.mp4"
+    src = "media/in/lane1-straight.mp4"
 
     roi = np.array([[[100, 540], 
                      [900, 540], 
