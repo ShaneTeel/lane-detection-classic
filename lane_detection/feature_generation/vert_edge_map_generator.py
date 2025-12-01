@@ -95,11 +95,13 @@ class VerticalEdgeMapGenerator():
         HSL-Thresh Mask : NDArray
 
         '''
-        hls = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)
-        white = cv2.inRange(hls, white_lower, white_upper)
-        yellow = cv2.inRange(hls, yellow_lower, yellow_upper)
-        mask = cv2.bitwise_or(white, yellow)
-        return cv2.bitwise_and(frame, frame, mask=mask)
+        # hls = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)
+        # white = cv2.inRange(hls, white_lower, white_upper)
+        # yellow = cv2.inRange(hls, yellow_lower, yellow_upper)
+        # mask = cv2.bitwise_or(white, yellow)
+        # return cv2.bitwise_and(frame, frame, mask=mask)
+        hsl = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)
+        return cv2.threshold(hsl[:, :, 1], 150.0, 255.0, cv2.THRESH_BINARY)[1] 
 
     def _detect_edges(self, frame:NDArray, ksize:Literal[3, 5, 7, 9, 11, 13, 15]=3):
         '''
