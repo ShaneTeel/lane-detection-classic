@@ -1,6 +1,12 @@
 import cv2
+import numpy as np
 from numpy.typing import NDArray
 from typing import Literal
+from .vert_edge_map_generator import VerticalEdgeMapGenerator
+from lane_detection.utils.constants import (
+    THRESH_WHITE_LOWER, THRESH_WHITE_UPPER,
+    THRESH_YELLOW_LOWER, THRESH_YELLOW_UPPER
+)
    
 class ThresholdMapGenerator():
     '''
@@ -25,7 +31,7 @@ class ThresholdMapGenerator():
     --------------
     `.generate()`
     '''
-    def __init__(self, threshold:float=150.0, large_ksize:Literal[11, 13, 15, 17, 19, 21] = 15, small_ksize:Literal[3, 5, 7, 9, 11, 13, 15] = 15):
+    def __init__(self, large_ksize:Literal[11, 13, 15, 17, 19, 21] = 15, small_ksize:Literal[3, 5, 7, 9, 11, 13, 15] = 15):
         '''
         Parameters
         ----------
@@ -40,7 +46,11 @@ class ThresholdMapGenerator():
             The kernel size used during the second morphological operation performed against the frame/image.
             The kernel is used to close small gaps between non-zero pixels. It is also used to dilate the image.            
         '''
-        self.threshold = threshold
+        self.white_lower = THRESH_WHITE_LOWER
+        self.white_upper = THRESH_WHITE_UPPER
+        self.yellow_lower = THRESH_YELLOW_LOWER
+        self.yellow_upper = THRESH_YELLOW_UPPER
+
         self.small_ksize = small_ksize
         self.large_ksize = large_ksize
         
@@ -65,40 +75,47 @@ class ThresholdMapGenerator():
         feature map : NDArray
             result of `cv2.morphologyEx()` + `cv2.dilate()`
         '''
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)
-        thresh = self._threshold(frame, self.threshold)
+        thresh = self._thresh_mask(frame, self.white_lower, self.white_upper, self.yellow_lower, self.yellow_upper)
         dense_mask = self._morph_frame(thresh, self.large_ksize, self.small_ksize)
         return thresh, dense_mask
-    
-    def _threshold(self, frame:NDArray, threshold:float=150.0):
+
+    def _thresh_mask(self, frame:NDArray, white_lower:NDArray, white_upper:NDArray, yellow_lower:NDArray, yellow_upper:NDArray):
         '''
         Description
         -----------
         Performs a BGR to HSL color conversion on a frame/image, 
-        then generates a binary image from the L-channel using `cv2.threshold()`. 
+        then generates a masks from the L- and S-channels using `cv2.inRange()`. The two masks are merged via a `cv2.bitwise_or()`.
+        Lastly, the merged HLS-mask is applied to the original frame with `cv2.bitwise_and()`. 
 
         Parameters
         ----------
         frame : NDArray
-            source frame/image that will be used to generate a binary image.
+            source frame/image that will be used to generate the mask.
 
-        threshold : float
-            Value used to determine whether a pixel intensity within the frame/image will be converted to 0 or 255 
+        white_lower : NDArray
+            Vector of size == 3 that represents the lower bands of Hue, Lightness, and Saturation used to detect the "white" portions of the image. Passed as `lowerb` argument to `cv2.inRange()`. 
+        white_upper : NDArray
+            Vector of size == 3 that represents the upper bands of Hue, Lightness, and Saturation used to detect the "white" portions of the image. Passed as `upperb` argument to `cv2.inRange()`. 
+        white_lower : NDArray
+            Vector of size == 3 that represents the lower bands of Hue, Lightness, and Saturation used to detect the "yellow" portions of the image. Passed as `lowerb` argument to `cv2.inRange()`. 
+        white_lower : NDArray
+            Vector of size == 3 that represents the upper bands of Hue, Lightness, and Saturation used to detect the "yellow" portions of the image. Passed as `upperb` argument to `cv2.inRange()`. 
             
         Returns
         -------
-        binary image : NDArray
-            result of `cv2.threshold()`.
+        HSL-Thresh Mask : NDArray
         '''
-        _, L_thresh = cv2.threshold(frame[:, :, 1], threshold, 255.0, cv2.THRESH_BINARY)
-        _, S_thresh = cv2.threshold(frame[:, :, 2], threshold, 255.0, cv2.THRESH_BINARY)
-        return cv2.bitwise_or(L_thresh, S_thresh)
+        hls = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)
+        white = cv2.inRange(hls, white_lower, white_upper)
+        yellow = cv2.inRange(hls, yellow_lower, yellow_upper)
+        mask = cv2.bitwise_or(white, yellow)
+        return cv2.bitwise_and(frame, frame, mask=mask)
 
     def _morph_frame(self, frame:NDArray, large_ksize:Literal[11, 13, 15, 17, 19, 21] = 15, small_ksize:Literal[3, 5, 7, 9, 11, 13, 15]=3):
         '''
         Description
         -----------
-        Applies `cv2.morphologyEx()` x2 and `cv2.dilate()` to a binary image, respectively. 
+        Converts an image from BGR to grayscale, then applies `cv2.morphologyEx()` x2 and `cv2.dilate()` to a thresh mask, respectively. 
 
         Parameters
         ----------
@@ -118,6 +135,7 @@ class ThresholdMapGenerator():
         dense_mask : NDArray
             result of `cv2.morphologyEx()` x2 --> `cv2.dilate()`.
         '''
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         morph_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (large_ksize, large_ksize))
         closed = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, morph_kernel)
 

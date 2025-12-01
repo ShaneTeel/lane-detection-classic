@@ -62,14 +62,14 @@ class StudioManager():
     def get_frame_names(self, view_style:str=None, method:str="final"):
         view_style_names = {
             "final": {
-                "inset": ["Threshold", "Feature Map", "Masked"],
-                "mosaic": ["Threshold", "Feature Map", "Masked", "Composite"],
+                "inset": ["HSL Thresh Mask", "Feature Map", "ROI Masked"],
+                "mosaic": ["HSL Thresh Mask", "Feature Map", "ROI Masked", "Composite"],
                 "composite": ["Composite"]
             },
             "preview": {
                 "original": ["Original"],
-                "masked": ["Masked"],
-                "diptych": ["Original", "Masked"]
+                "masked": ["ROI Masked"],
+                "diptych": ["Original", "ROI Masked"]
             }
         }
 

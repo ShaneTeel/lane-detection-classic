@@ -2,6 +2,10 @@ import cv2
 import numpy as np
 from numpy.typing import NDArray
 from typing import Literal
+from lane_detection.utils.constants import (
+    THRESH_WHITE_LOWER, THRESH_WHITE_UPPER,
+    THRESH_YELLOW_LOWER, THRESH_YELLOW_UPPER
+)
    
 class VerticalEdgeMapGenerator():
     '''
@@ -22,7 +26,7 @@ class VerticalEdgeMapGenerator():
     `.generate()`
     '''
         
-    def __init__(self, threshold:float=150.0, ksize:Literal[3, 5, 7, 9, 11, 13, 15]=3) -> None:
+    def __init__(self, ksize:Literal[3, 5, 7, 9, 11, 13, 15]=3) -> None:
         '''
         Parameters
         ----------
@@ -32,7 +36,11 @@ class VerticalEdgeMapGenerator():
         ksize : int, {3, 5, 7, 9, 11, 13, 15}, default 3
             The kernel size passed to both `cv2.GaussianBlur()` and `cv2.Sobel()`.
         '''
-        self.threshold = threshold
+        self.white_lower = THRESH_WHITE_LOWER
+        self.white_upper = THRESH_WHITE_UPPER
+        self.yellow_lower = THRESH_YELLOW_LOWER
+        self.yellow_upper = THRESH_YELLOW_UPPER
+        
         self.ksize = ksize
         
     def generate(self, frame:NDArray) -> tuple[NDArray, NDArray]:
@@ -40,8 +48,9 @@ class VerticalEdgeMapGenerator():
         Description
         -----------
         Generates a vertical-based edge map. The frame/image is first converted from BGR to HSL format. 
-        The L-channel is then passed to `cv2.threshold()`. The resulting binary image is then passed to `cv2.GaussianBlur()` 
-        and `cv2.Sobel()`, respectively. Lastly, edge map pixel intensities are normalized back to a 0-255 pixel intensity range. 
+        Two thresh masks are created, targeting white and yellow pixels. The thresh masks are then merged and applied to the original image. 
+        The HSL-Thresh masked image is then passed to `cv2.GaussianBlur()` and `cv2.Sobel()`, respectively. 
+        Lastly, edge map pixel intensities are normalized back to a 0-255 pixel intensity range. 
 
         Parameters
         ----------
@@ -55,34 +64,42 @@ class VerticalEdgeMapGenerator():
         edge map : NDArray
             result of `cv2.Sobel()` + pixel normalization
         '''
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)
-        thresh = self._threshold(frame, self.threshold)
+        thresh = self._thresh_mask(frame, self.white_lower, self.white_upper, self.yellow_lower, self.yellow_upper)
         edge_map = self._detect_edges(thresh, self.ksize)
         return thresh, edge_map
     
-    def _threshold(self, frame:NDArray, threshold:float=150.0):
+    def _thresh_mask(self, frame:NDArray, white_lower:NDArray, white_upper:NDArray, yellow_lower:NDArray, yellow_upper:NDArray):
         '''
         Description
         -----------
         Performs a BGR to HSL color conversion on a frame/image, 
-        then generates a binary image from the L-channel using `cv2.threshold()`. 
+        then generates a masks from the L- and S-channels using `cv2.inRange()`. The two masks are merged via a `cv2.bitwise_or()`.
+        Lastly, the merged HLS-mask is applied to the original frame with `cv2.bitwise_and()`. 
 
         Parameters
         ----------
         frame : NDArray
-            source frame/image that will be used to generate a binary image.
+            source frame/image that will be used to generate the mask.
 
-        threshold : float
-            Value used to determine whether a pixel intensity within the frame/image will be converted to 0 or 255 
+        white_lower : NDArray
+            Vector of size == 3 that represents the lower bands of Hue, Lightness, and Saturation used to detect the "white" portions of the image. Passed as `lowerb` argument to `cv2.inRange()`. 
+        white_upper : NDArray
+            Vector of size == 3 that represents the upper bands of Hue, Lightness, and Saturation used to detect the "white" portions of the image. Passed as `upperb` argument to `cv2.inRange()`. 
+        white_lower : NDArray
+            Vector of size == 3 that represents the lower bands of Hue, Lightness, and Saturation used to detect the "yellow" portions of the image. Passed as `lowerb` argument to `cv2.inRange()`. 
+        white_lower : NDArray
+            Vector of size == 3 that represents the upper bands of Hue, Lightness, and Saturation used to detect the "yellow" portions of the image. Passed as `upperb` argument to `cv2.inRange()`. 
             
         Returns
         -------
-        binary image : NDArray
-            result of `cv2.threshold()`.
+        HSL-Thresh Mask : NDArray
+
         '''
-        _, L_thresh = cv2.threshold(frame[:, :, 1], threshold, 255.0, cv2.THRESH_BINARY)
-        _, S_thresh = cv2.threshold(frame[:, :, 2], threshold, 255.0, cv2.THRESH_BINARY)
-        return cv2.bitwise_or(L_thresh, S_thresh)
+        hls = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)
+        white = cv2.inRange(hls, white_lower, white_upper)
+        yellow = cv2.inRange(hls, yellow_lower, yellow_upper)
+        mask = cv2.bitwise_or(white, yellow)
+        return cv2.bitwise_and(frame, frame, mask=mask)
 
     def _detect_edges(self, frame:NDArray, ksize:Literal[3, 5, 7, 9, 11, 13, 15]=3):
         '''
@@ -104,6 +121,7 @@ class VerticalEdgeMapGenerator():
         edge map : NDArray
             result of `cv2.GaussianBlur()` --> `cv2.Sobel()`.
         '''
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         kernel = (ksize, ksize)
         frame = cv2.GaussianBlur(frame, kernel, 0)
 

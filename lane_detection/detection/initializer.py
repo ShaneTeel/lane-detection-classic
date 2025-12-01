@@ -1,6 +1,7 @@
 # Imports
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, Field, create_model, ConfigDict
 from typing import Literal, Union
+import numpy as np
 from numpy.typing import NDArray
 
 from lane_detection.studio import StudioManager
@@ -34,9 +35,9 @@ class Initializer():
 
     def initialize_generator(self):
         if "edge" in self.generator:
-            return VerticalEdgeMapGenerator(threshold=self.configs.threshold, ksize=self.configs.ksize)
+            return VerticalEdgeMapGenerator(self.configs.ksize)
         elif "thresh" in self.generator:
-            return ThresholdMapGenerator(threshold=self.configs.threshold, large_ksize=self.configs.large_ksize, small_ksize=self.configs.small_ksize,)
+            return ThresholdMapGenerator(self.configs.large_ksize, self.configs.small_ksize)
 
     def initialize_selector(self):
         if "direct" in self.selector:
@@ -76,7 +77,7 @@ class Initializer():
         final.update(config_obj.model_dump())
 
         FinalConfigs = create_model(
-            "FinalConfigs", **{k: (type(v), v) for k, v in final.items()}
+            "FinalConfigs", **{k: (type(v), v) for k, v in final.items()},
         )
         return FinalConfigs()
 
@@ -87,11 +88,9 @@ class BEVConfigs(BaseModel):
     resolution:float = Field(default=0.03, ge=0.01)
 
 class EdgeMapConfigs(BaseModel):
-    threshold:float = Field(default=150.0, ge=0.0, le=255.0)
     ksize:Literal[3, 5, 7, 9, 11, 13, 15] = 3
 
 class ThreshMapConfigs(BaseModel):
-    threshold:float = Field(default=150.0, ge=0.0, le=255.0)
     small_ksize:Literal[3, 5, 7, 9, 11, 13, 15] = 3
     large_ksize:Literal[11, 13, 15, 17, 19, 21] = 15
 
@@ -106,7 +105,7 @@ class DirectPixelConfigs(BaseModel):
 class OLSConfigs(BaseModel):
     scaler_type:Literal["min_max", "z_score"] = "min_max"
     degree:Literal[1, 2, 3] = 2
-    P_primer:float = Field(default=0.5, ge=0.0, le=0.9)
+    P_primer:float = Field(default=0.5, ge=0.0, le=0.99)
     process_noise:Literal["low", "medium", "high"] = "low"
 
 class RANSACConfigs(OLSConfigs):

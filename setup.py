@@ -10,7 +10,7 @@ setup(
     description="Classic lane line detection system using traditional CV models and Kalman filtering",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/ShaneTeel/lane-detection",
+    url="https://github.com/ShaneTeel/lane-detection-classic",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

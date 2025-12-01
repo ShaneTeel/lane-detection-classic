@@ -50,7 +50,7 @@ class Illustrator:
         banner_height = int(0.08 * h)
         cv2.rectangle(frame, (0, 0), (w, banner_height), (0, 0, 0), thickness=-1, lineType=cv2.LINE_AA)
 
-        cv2.putText(frame, text, (int(w // 2) - 50, 10 + (banner_height // 2)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.putText(frame, text, (int(w // 2) - 80, 10 + (banner_height // 2)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
         return frame
 
     def _hex_to_bgr(self, color):
