@@ -14,7 +14,7 @@ def demo_video():
         roi=roi, 
         generator="edge",
         selector='hough', 
-        estimator='ransac',
+        estimator='ols',
         degree=2,
         scaler_type="z_score",
         P_primer=0.99,
