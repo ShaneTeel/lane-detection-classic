@@ -4,7 +4,6 @@
 - [Description / Overview](#description--overview)
 - [Demo](#demo)
 - [Quick Start](#quick-start)
-- [Methodology](#methodology)
 - [Project Structure](#project-structure)
 - [Trade-Offs](#trade-offs)
 - [Deep Learning Alibi](#why-not-deep-learning)
@@ -69,24 +68,6 @@ report = system.run("composite", stroke=False, fill=True)
 
 print(report)
 ```
-[Return to TOC](#table-of-contents)
-
-## Methodology
-
-**Feature Generation**
-
-**ROI Masking**
-
-**Feature Selection / Extraction** 
-
-**BEV Projection** (Optional)
-
-**Polynomial Fit**
-
-**Kalman Filter**
-
-**Visualization**
-
 [Return to TOC](#table-of-contents)
 
 ## Project Structure
@@ -157,7 +138,8 @@ This project is not meant to challenge modern approaches. It is used as a learni
 [Return to TOC](#table-of-contents)
 
 ## To-Do
-- Add notebooks to outline the application of each step (e.g., feature generation, feature selection, regression, etc.).
+- Add logger
+- Add "Methodology" section to `README.md` with static images for each step of the pipeline
 - Add unit tests for critical modules (e.g., Kalman, RANSAC, OLS).
 
 [Return to TOC](#table-of-contents)
