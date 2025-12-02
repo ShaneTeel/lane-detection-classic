@@ -1,18 +1,7 @@
 import numpy as np
 from lane_detection.detection import GridSearch
-from lane_detection.utils import STRAIGHT_LANE_VID_ROI
 
-def demo_grid_search():
-    src = "media/in/readme_test_img.jpg"
-
-    grid = {
-        "roi": [STRAIGHT_LANE_VID_ROI], 
-        "scaler_type": ["z_score", "min_max"], 
-        "ksize": [3, 5, 7, 11],
-        "max_gap": [10, 15],
-        "use_bev": [True, False],
-        "degree": [1, 2]
-    }
+def demo_grid_search(src:str, params):
 
     gs = GridSearch(source=src, generator="edge", selector="hough", estimator="ols", metric="r2", param_grid=grid)
 
@@ -28,4 +17,18 @@ def demo_grid_search():
     print(eval)
 
 if __name__=="__main__":
-    demo_grid_search()
+    src = "media/in/readme_test_img.jpg"
+    
+    STRAIGHT_LANE_VID_ROI = np.array([[[100, 540], 
+                                       [900, 540], 
+                                       [550, 340], 
+                                       [420, 340]]], dtype=np.int32)
+    grid = {
+        "roi": [STRAIGHT_LANE_VID_ROI], 
+        "scaler_type": ["z_score", "min_max"], 
+        "ksize": [3, 5, 7, 11],
+        "max_gap": [10, 15],
+        "use_bev": [True, False],
+        "degree": [1, 2]
+    }
+    demo_grid_search(src, grid)
