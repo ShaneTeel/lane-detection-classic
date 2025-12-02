@@ -125,7 +125,7 @@ class VerticalEdgeMapGenerator():
         kernel = (ksize, ksize)
         frame = cv2.GaussianBlur(frame, kernel, 0)
 
-        sobel_X = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=ksize)
+        sobel_X = cv2.Sobel(frame, cv2.CV_32F, 1, 0, ksize=ksize)
         sobel_X = np.absolute(sobel_X)
 
         return np.uint8(sobel_X / np.max(sobel_X) * 255)

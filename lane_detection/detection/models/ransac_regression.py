@@ -97,7 +97,7 @@ class RANSACRegression():
         consensus = self._calc_consensus(population)
 
         # If there are too few points to perform RANSAC, fall back to OLS
-        sample_size = min(max(self.poly_size, 1), population)
+        sample_size = min(max(self.poly_size + 1, 1), population)
 
         if population < sample_size:
             self.fitted = True

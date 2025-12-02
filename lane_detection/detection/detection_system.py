@@ -114,7 +114,7 @@ class DetectionSystem():
                 masked = self.mask.inverse_mask(frame)
                 self._generate_output(view_style, [frame, masked], frame_names, None, False, False, False)
 
-    def run(self, view_style:Union[Literal["inset", "mosaic", "composite"], None]="composite", stroke:bool=False, fill:bool=True, save:bool=False):
+    def run(self, view_style:Union[Literal["inset", "mosaic", "composite"], None]="composite", stroke:bool=False, fill:bool=True, file_out_name:str=None):
         """
         Execute lane detection pipeline on entire video/image source.
         
@@ -143,7 +143,7 @@ class DetectionSystem():
         When using BEV projection, comparison occurs in camera space after inverse transform.
         """
         
-        frame_names = self._configure_output(view_style, save, method="final")
+        frame_names = self._configure_output(view_style, file_out_name, method="final")
 
         while True and not self.exit:
             ret, frame = self.studio.return_frame()
@@ -174,7 +174,7 @@ class DetectionSystem():
                 frame_lst = [frame, thresh, feature_map, masked]
 
                 if view_style is not None:
-                    self._generate_output(view_style, frame_lst, frame_names, lane_lines, stroke, fill, save)
+                    self._generate_output(view_style, frame_lst, frame_names, lane_lines, stroke, fill)
                 
         return self._generate_report()
     
@@ -209,21 +209,21 @@ class DetectionSystem():
         met2 = self.evaluator2.return_metrics()[score_type.upper()]
         return met1, met2
     
-    def _configure_output(self, view_style:str=None, save:bool=False, method:Literal["preview", "final"]="final"):
+    def _configure_output(self, view_style:str=None, file_out_name:str=None, method:Literal["preview", "final"]="final"):
         if view_style is not None:      
             if self.studio.source_type() != "image":
                 self.studio.print_menu()
-            if save:
-                self.studio.create_writer()
+            if file_out_name is not None:
+                self.studio.create_writer(file_out_name)
             return self.studio.get_frame_names(view_style.lower(), method)
 
-    def _generate_output(self, view_style, frame_lst:list, frame_names:list, lane_lines:NDArray=None, stroke:bool=True, fill:bool=False, save:bool=False):
+    def _generate_output(self, view_style, frame_lst:list, frame_names:list, lane_lines:NDArray=None, stroke:bool=True, fill:bool=False):
         final = self.studio.gen_view(frame_lst, frame_names, lane_lines, view_style, stroke, fill)
         cv2.namedWindow(self.name)
         cv2.imshow(self.name, final)
         if self.studio.control_playback():
             self.exit = True
-        if save:
+        if self.studio.writer_check():
             self.studio.write_frames(final)
 
     def get_default_configs(self):

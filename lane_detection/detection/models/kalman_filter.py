@@ -96,7 +96,7 @@ class KalmanFilter():
         self.x = self.F @ self.x
         self.P = self.F @ self.P @ self.F_T + self.Q
 
-        if np.trace(self.P) > 1000.0:
+        if np.trace(self.P) > 500.0:
             print("WARNING: Kalman filter diverging, performing reset")
             self._reset(coeffs)
 

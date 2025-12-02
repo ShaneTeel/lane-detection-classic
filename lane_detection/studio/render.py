@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 
 class Render:
 
-    def render_mosaic(self, frames:list):
+    def render_mosaic(self, frames:list, max_width:int):
 
         top = self._render_diptych(frames[:2])
         bottom = self._render_diptych(frames[2:])
@@ -12,7 +12,7 @@ class Render:
         mosaic = np.vstack([top, bottom])
         h, w = mosaic.shape[:2]
         cv2.line(mosaic, (0, h // 2), (w, h // 2), (0, 255, 255), 1, cv2.LINE_AA)
-        return self._resize_frame(mosaic, 1500)
+        return self._resize_frame(mosaic, max_width)
 
     def render_inset(self, composite:np.ndarray, frames:list):
         triptych = self._render_triptych(frames)

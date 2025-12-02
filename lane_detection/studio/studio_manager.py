@@ -43,7 +43,7 @@ class StudioManager():
         if view_style == "mosaic":
             frame_lst.append(final)
             frames = [self.draw._draw_banner_text(frame, name) for frame, name in zip(frame_lst, frame_names)]
-            return self.render.render_mosaic(frames)
+            return self.render.render_mosaic(frames, self.source.width)
 
     def return_frame(self):
         if self.source.source_type == 'image':
@@ -87,8 +87,8 @@ class StudioManager():
             return 1, self.source.height, self.source.width
         return self.source.fps, self.source.height, self.source.width
     
-    def create_writer(self):
-        self.write._initialize_writer()
+    def create_writer(self, file_out_name:str):
+        self.write._initialize_writer(file_out_name)
 
     def write_frames(self, frame:NDArray):
         if self.write.writer:
@@ -107,3 +107,6 @@ class StudioManager():
     
     def get_name(self):
         return self.source.name
+    
+    def writer_check(self):
+        return True if self.write.writer is not None else False

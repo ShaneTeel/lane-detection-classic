@@ -1,16 +1,12 @@
 import numpy as np
 from lane_detection.detection import GridSearch
+from lane_detection.utils import STRAIGHT_LANE_VID_ROI
 
 def demo_grid_search():
-    src = "media/in/lane1-straight.jpg"
-
-    roi = np.array([[[100, 540], 
-                     [900, 540], 
-                     [530, 330], 
-                     [440, 330]]], dtype=np.int32)
+    src = "media/in/readme_test_img.jpg"
 
     grid = {
-        "roi": [roi], 
+        "roi": [STRAIGHT_LANE_VID_ROI], 
         "scaler_type": ["z_score", "min_max"], 
         "ksize": [3, 5, 7, 11],
         "max_gap": [10, 15],
