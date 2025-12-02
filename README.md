@@ -19,7 +19,7 @@ Detects lane lines in road videos using:
 
 ## Quick Start
 ```bash
-git clones https://github.com/ShaneTeel/lane-detection-classic.git
+git clone https://github.com/ShaneTeel/lane-detection-classic.git
 cd lane-detection-classic
 pip install -e .
 python scripts/straight_lane_demo.py
