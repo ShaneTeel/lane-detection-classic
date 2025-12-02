@@ -1,4 +1,15 @@
 # Lane Detection
+
+## Table-of-Contents
+- [Description / Overview](#description--overview)
+- [Demo](#demo)
+- [Quick Start](#quick-start)
+- [Methodology](#methodology)
+- [Project Structure](#project-structure)
+- [Trade-Offs](#trade-offs)
+- [Deep Learning Alibi](#why-not-deep-learning)
+- [To-Do](#to-do)
+
 ## Description / Overview
 A classic lane line detection system that employs the following techniques:
 
@@ -12,11 +23,15 @@ A classic lane line detection system that employs the following techniques:
 
 Built to demonstrate understanding of CV pipelines without deep learning and without the use of camera calibration data. 
 
+[Return to TOC](#table-of-contents)
+
 ## Demo
 
 ![Demo](media/out/readme/curved-edge-direct-demo.gif)
 
 See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu.be/AOmAQo3oTFU)
+
+[Return to TOC](#table-of-contents)
 
 ## Quick Start
 ### Install Package
@@ -54,6 +69,8 @@ report = system.run("composite", stroke=False, fill=True)
 
 print(report)
 ```
+[Return to TOC](#table-of-contents)
+
 ## Methodology
 
 **Feature Generation**
@@ -70,6 +87,8 @@ print(report)
 
 **Visualization**
 
+[Return to TOC](#table-of-contents)
+
 ## Project Structure
 ```
 lane_detection/
@@ -81,43 +100,64 @@ lane_detection/
 |-- image_geometry/      # ROI mask, BEV projection
 |-- studio/              # Visualization
 ```
+[Return to TOC](#table-of-contents)
 
 ## Trade-Offs
-**RANSAC vs OLS**
-- RANSAC struggles with curved roads. Additionally, as the polynomial degree increases, the minimum sample size needed typically results in an unstable fit. Lastly, RANSAC can reduce computational speed.
-- OLS is not very resistent to outliers and requires quality feature generation / selection to ensure proper application.
+**Feature Generation**
 
-**Hough vs Direct**
-- Probabilistic Hough Lines Transform performs struggles with curved roads. If BEV Transform were applied prior to `cv2.HoughLinesP()`, this issue is likely mitigated, but requires camera parameters (not included in this exercise).
-- The direct approach is much less resilient to outliers and requires special attention to the `n_std` argument to ensure outliers are filtered out appropriately.
+*Thresh*
+- Amplifies both good pixel coordinates and bad pixel coordinates.
+- Useful when the actual lane lines are faded / worn.
 
-**Thresh vs Edge**
-- The thresh map amplifies both good pixel coordinates and bad pixel coordinates, but is useful when the actual lane lines are faded / worn as an edge detection approach would return too few points to produce a good fit.
-- The vertical edge map rejects noise resulting from horizontal lines, but can produce too few points to produce the right fit when the actual lane lines are faded / worn. 
+*Edge*
+- Rejects noise resulting from horizontal lines
+- Can generate too few points; not enough features to generate the right fit. 
+
+**Feature Selection**
+
+*Hough*
+- Struggles with curved roads. 
+- If BEV Transform were applied prior to `cv2.HoughLinesP()`, this issue is likely mitigated, but requires camera parameters (not included in this exercise).
+
+*Direct*
+- Much less resilient to outliers
+- Requires special attention to the `n_std` argument to ensure outliers are filtered out appropriately.
+
+**Estimators**
+
+*RANSAC*
+- Struggles with curved roads. 
+- As polynomial degree increases, the minimum sample size needed results in an unstable fit. 
+- Can reduce computational speed.
+
+*OLS*
+- Not very resistent to outliers.
+- Requires a more deliberate feature generation / selection to ensure proper outliers filtering.
 
 **BEV** (Optional)
-- BEV projection aids in generating polylines that conform to the actual lane line locations, but will reduce computation speed.
-- Deviates from modern approaches that perform BEV projection prior to feature selection.
-- Requires camera parameters (not included in this exercise) to improve effectiveness.
-- Does not un-distort the image due to a lack of camera parameters / calibration calculation.
+- Aids in generating polylines that conform to the actual lane line locations.
+- Reduces computational speed.
+- Requires camera parameters (not included in this exercise) to improve use.
 
-## Limitations
+### Limitations
 
 - Struggles with heavy road-noise (i.e., overpasses, road construction change (asphalt --> concrete))
 - Requires manual ROI selection
 
+[Return to TOC](#table-of-contents)
+
 ## Why Not Deep Learning?
 
-This project demonstrates:
-- Understanding of classical CV techniques
-- Ability to build modular systems
-- Knowledge of robust regression and filtering
-
 This project is not meant to challenge modern approaches. It is used as a learning exercise to advance author's understanding of the following:
-- Classic computer vision models
-- Basic preprocessing steps
+- Classic computer vision pipelines.
+- Basic image preprocessing steps.
 - Manual application of Kalman, Homography, and Regression.
+- Building modular systems.
+
+[Return to TOC](#table-of-contents)
 
 ## To-Do
-- Add notebooks to outline the application of each step (e.g., feature generation, feature selection, regression, etc.)
-- Add unit tests for critical modules (e.g., Kalman, RANSAC, OLS)
+- Add notebooks to outline the application of each step (e.g., feature generation, feature selection, regression, etc.).
+- Add unit tests for critical modules (e.g., Kalman, RANSAC, OLS).
+
+[Return to TOC](#table-of-contents)
