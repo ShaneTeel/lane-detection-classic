@@ -1,4 +1,7 @@
 import cv2
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Controller:
 
@@ -19,44 +22,44 @@ class Controller:
                 while self.paused:
                     key = cv2.waitKey(1) & 0xFF
                     if key in [ord('p'), ord('P'), ord(' ')]:
-                        print("Resuming video.")
+                        logger.info(f"Resuming video at {self.current_frame}")
                         self.paused = False
                     elif key in [ord('q'), ord('Q'), 27]:
-                        print("Exiting video player.")
+                        logger.info(f"Exiting video player at frame {self.current_frame}.")
                         self.exit = True
                         break
                     elif key == ord('-'):
                         self.current_frame = (self.current_frame - 50) + self.last_frame if self.current_frame - 50 <= 0 else self.current_frame - 50
-                        print(f"Skipping to frame {self.current_frame}")
+                        logger.info(f"Skipping to frame {self.current_frame}")
                         self.source.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
                     elif key == ord('+'):
                         self.current_frame = (self.current_frame + 50) - self.last_frame if self.current_frame + 50 > self.last_frame else self.current_frame + 50
-                        print(f"Skipping to frame {self.current_frame}")
+                        logger.info(f"Skipping to frame {self.current_frame}")
                         self.source.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
                     elif key in [ord('r'), ord('R')]:
                         self.current_frame = 0
-                        print(f"Restarting stream.")
+                        logger.info("Restarting stream.")
                         self.source.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
 
                 if not self.paused:
                     key = cv2.waitKey(1) & 0xFF
                     if key in [ord('p'), ord('P'), ord(' ')]:
                         self.paused = True
-                        print(f"Pausing at frame {self.current_frame}.")
+                        logger.info(f"Pausing at frame {self.current_frame}.")
                     elif key in [ord('q'), ord('Q'), 27]:
-                        print("Exiting video player.")
+                        logger.info(f"Exiting video player at frame {self.current_frame}.")
                         self.exit = True
                     elif key == ord('-'):
                         self.current_frame = (self.current_frame - 50) + self.last_frame if self.current_frame - 50 <= 0 else self.current_frame - 50
-                        print(f"Skipping to frame {self.current_frame}")
+                        logger.info(f"Skipping to frame {self.current_frame}")
                         self.source.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
                     elif key == ord('+'):
                         self.current_frame = (self.current_frame + 50) - self.last_frame if self.current_frame + 50 > self.last_frame else self.current_frame + 50
-                        print(f"Skipping to frame {self.current_frame}")
+                        logger.info(f"Skipping to frame {self.current_frame}")
                         self.source.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
                     elif key in [ord('r'), ord('R')]:
                         self.current_frame = 0
-                        print(f"Restarting stream.")
+                        logger.info(f"Restarting stream.")
                         self.source.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
                     
                     self.current_frame += 1

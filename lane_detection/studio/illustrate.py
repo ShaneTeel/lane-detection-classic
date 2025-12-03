@@ -1,6 +1,9 @@
     
 import cv2
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Illustrator:
     '''Superimposes shapes/lines on an image'''
@@ -19,21 +22,21 @@ class Illustrator:
             if line.size != 0:
                 valid_lines.append(line)
             if len(valid_lines) == 0:
-                print("No lines found, skipping")
+                logger.warning("No lines found, skipping")
                 return cv2.addWeighted(frame, 0.8, canvas, 0.5, 0.0)
         if stroke:
             for line in valid_lines:
                 self._draw_lines(canvas, [line])
         if fill:
             if len(valid_lines) != 2:
-                print("Left or right lane lines not found, skipping fill")
+                logger.warning("Left or right lane lines not found, skipping fill")
                 return cv2.addWeighted(frame, 0.8, canvas, 0.5, 0.0)
             self._draw_fill(valid_lines, canvas)
         return cv2.addWeighted(frame, 0.8, canvas, 0.5, 0.0)
 
     def _draw_lines(self, img, line):
         if line is None:
-            print("No lines, skipping.")
+            logger.warning("No lines, skipping.")
             return
         else:
             cv2.polylines(img, line, isClosed=False, color=self.stroke_color, thickness=3, lineType=cv2.LINE_AA)

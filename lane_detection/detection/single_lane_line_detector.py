@@ -1,9 +1,12 @@
 import numpy as np
 from numpy.typing import NDArray
 from typing import Literal, Union
+import logging
 
 from lane_detection.scalers import MinMaxScaler, StandardScaler
 from .models import OLSRegression, RANSACRegression, KalmanFilter
+
+logger = logging.getLogger(__name__)
 
 class SingleLaneLineDetector():
     """
@@ -86,6 +89,9 @@ class SingleLaneLineDetector():
         self.scaler = None
         self.name = f"Kalman Filtered {estimator_type} Regression"
 
+        logging.debug(f"Initialized SingleLaneLineDetector: Name={self.name}, with "
+                      f"Scaler Type={self.scaler_type}.")
+
     def detect(self, lane:NDArray, start:Union[float, int], stop:Union[float, int]):
         """
         Detect lane line from point cloud and generate smooth polynomial.
@@ -110,7 +116,7 @@ class SingleLaneLineDetector():
         generate smooth line → inverse transform to pixel space
         """
         if len(lane) < self.degree + 1:
-            print("WARNING: lane does not have enough points to perform detection.")
+            logger.warning("Lane line does not have enough points to perform fit.")
             return np.array([])
 
         # Scale and fit points
@@ -173,7 +179,7 @@ class SingleLaneLineDetector():
         
         if self.scaler is None:
             max_error = self.max_error
-            print("WARNING: Performing fit without scaling max_error")
+            logger.warning("Performing fit without scaling max_error")
         else:
             y_range = self.scaler.y_range()
             max_error = np.abs(self.max_error / y_range)

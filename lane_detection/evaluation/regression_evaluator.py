@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 
 from .regression_metrics import (
     r2_score,
@@ -6,6 +7,8 @@ from .regression_metrics import (
     root_mean_squared_error,
     mean_absolute_average
 )
+
+logger = logging.getLogger(__name__)
 
 class RegressionEvaluator():
     '''
@@ -57,7 +60,7 @@ class RegressionEvaluator():
         '''
         n = len(y_true)
         if n == 0:
-            print("`y_true` contains no points.")
+            logger.warning("`y_true` contains no points; skipping line.")
             return
         
         self.r2.append(r2_score(y_true, y_pred))

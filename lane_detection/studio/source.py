@@ -1,8 +1,8 @@
 import cv2
 import os
-import tempfile
-import shutil
-from streamlit.runtime.uploaded_file_manager import UploadedFile
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Reader():
 
@@ -10,7 +10,6 @@ class Reader():
         self.source = source
         self.source_type = None
         self.name = None
-        self.temp_file_path = None
         self.ext = None
         self.cap = None
         self.width = None
@@ -28,8 +27,6 @@ class Reader():
                 self._initialize_image()
             else:
                 self._initialize_video()
-        elif isinstance(self.source, UploadedFile):
-            self._initialize_file_upload()
         else:
             raise ValueError(f"Invalid source type: {type(self.source)}. Expected str or int.")
 
@@ -52,7 +49,7 @@ class Reader():
         if self.name is None:
             self.name, _ = os.path.splitext(os.path.basename(self.source))
 
-        print(f"Successfully read image {self.name}: {self.source} ({self.height}x{self.width})")
+        logger.info(f"Successfully read image {self.name}: {self.source} ({self.height}x{self.width})")
 
     def _initialize_video(self):
         '''ADD'''
@@ -73,7 +70,7 @@ class Reader():
             if self.name is None:
                 self.name, _ = os.path.splitext(os.path.basename(self.source))
             
-            print(f"Successfully loaded video: {self.source} ({self.width}x{self.height}, {self.fps} FPS, {self.frame_count} frames)")
+            logger.info(f"Successfully loaded video: {self.source} ({self.width}x{self.height}, {self.fps} FPS, {self.frame_count} frames)")
 
     def _initialize_camera(self):
         '''ADD'''
@@ -90,23 +87,4 @@ class Reader():
             if self.name is None:
                 self.name = 'camera_' + str(self.source)
             
-            print(f"Successfully opened camera: {self.source} ({self.width}x{self.height}, {self.fps:.1f} FPS)")
-
-    def _initialize_file_upload(self):
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_file:
-            try:
-                shutil.copyfileobj(self.source.file, temp_file)
-                self.temp_file_path = temp_file.name
-            finally:
-                self.source.file.close()
-        self.cap = cv2.VideoCapture(self.temp_file_path)
-
-        if not self.cap.isOpened():
-            raise ValueError(f"Error: Failed to open {self.name} video.")
-
-        else:       
-            self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
-            self.frame_count = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            self.name, self.ext = os.path.splitext(os.path.basename(self.source.filename))
+            logger.info(f"Successfully opened camera: {self.source} ({self.width}x{self.height}, {self.fps:.1f} FPS)")

@@ -1,5 +1,7 @@
 import cv2
-import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Custodian():
 
@@ -17,6 +19,6 @@ class Custodian():
 
     def __del__(self):
         self._clean_up()
-        if self.source.temp_file_path is not None:
-            os.unlink(self.source.temp_file_path)
         cv2.destroyAllWindows()
+        logger.info("Clean up complete; resources destroyed.")
+    

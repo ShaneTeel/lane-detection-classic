@@ -1,5 +1,8 @@
 import numpy as np
 from numpy.typing import NDArray
+import logging
+
+logger = logging.getLogger(__name__)
 
 class OLSRegression:
     """

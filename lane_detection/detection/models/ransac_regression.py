@@ -1,6 +1,9 @@
 import numpy as np
 from numpy.typing import NDArray
 from .ols_regression import OLSRegression
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RANSACRegression():
     """
@@ -63,6 +66,7 @@ class RANSACRegression():
         self.name = "RANSAC Regression"
 
     def fit_predict(self, X:NDArray, y:NDArray, start:float | int, stop: float | int):
+        
         coeffs = self.fit(X, y)
         return self.predict(coeffs, start, stop)
 
@@ -92,9 +96,13 @@ class RANSACRegression():
         5. Adapt iteration count based on inlier ratio
         6. Refit final model on all inliers
         """
+
         population = len(X)
 
         consensus = self._calc_consensus(population)
+
+        logger.debug(f"Fitting lane with {population} points, "
+                     f"Required to reach consensus of {consensus}")
 
         # If there are too few points to perform RANSAC, fall back to OLS
         sample_size = min(max(self.poly_size + 1, 1), population)
@@ -114,7 +122,7 @@ class RANSACRegression():
             ret, coeffs = self._perform_sample_fit(sample_X, sample_y)
             
             if not ret:
-                print(f"WARNING: Unable to perform fit, skipping iteration {N_completed}")
+                logger.warning(f"Unable to perform fit; skipping iteration {N_completed}")
                 N_completed += 1
                 continue
 
@@ -152,11 +160,11 @@ class RANSACRegression():
             if isinstance(coeffs, np.ndarray) or len(coeffs) == self.poly_size:
                 return True, coeffs
             else:
-                print(f"WARNING: calcualted coeffs not of correct type ({np.ndarray}) or correct size ({self.poly_size})")
+                logger.warning(f"Calcualted coeffs not of correct type ({np.ndarray}) or correct size ({self.poly_size})")
                 return False, None
             
         except (np.linalg.LinAlgError, TypeError, ValueError) as e:
-            print(f"WARNING: polyfit error - {e}")
+            logger.warning(f"Polyfit error - {e}")
             return False, None
 
     def _evaluate_sample_fit(self, coeffs:NDArray, X:NDArray, y:NDArray):
@@ -192,7 +200,7 @@ class RANSACRegression():
                 else:
                     return int(self.min_inliers)
             except TypeError:
-                # fallback to 50% if misconfigured
+                logger.warning(f"Invalid `min_inliers` type or value, using 50% of population")
                 return int(np.ceil(population * 0.5))
             
     def _get_best_coeffs(self, consensus:NDArray, X:NDArray, y:NDArray):
@@ -206,26 +214,25 @@ class RANSACRegression():
                     if isinstance(ransac_coeffs, np.ndarray) and len(ransac_coeffs) == self.poly_size:
                         return ransac_coeffs
                 except (np.linalg.LinAlgError, TypeError, ValueError) as e:
-                    print(f"WARNING: Failed to refit best coeffs due to {e}; returning best_coeffs without refit")
+                    logger.warning(f"Failed to refit best coeffs due to {e}; returning best_coeffs without refit")
                 else:
-                    return self.best_coeffs # Return best coeffs without refit 
+                    return self.best_coeffs 
                        
         if self.best_inliers is None or self.best_inlier_count < consensus:
-            print(f"NO CONSENSUS! Best inlier's account for {self.inlier_ratio * 100}% of total population, but args required {self.min_inliers * 100}%. Falling back to full-data OLS.")
+            logger.warning(f"NO CONSENSUS! Best inlier's account for {self.inlier_ratio * 100}% of total population, but args required {self.min_inliers * 100}%. Falling back to full-data OLS.")
         # Leading Coefficient check: If leading coefficient is a negative value, fit all data
         if self.degree == 2 and self.best_coeffs is not None:
             if self.best_coeffs[-1] < 0:
-                print(f"WARNING: Suspecious parabola a = {self.best_coeffs[-1]}")
+                logger.warning(f"Suspecious parabola a = {self.best_coeffs[-1]}. Falling back to full-data OLS.")
                 return self.estimator.fit(X, y)
 
         # FAIL SAFE: Fit all data (ordinary least squares)
         try:
-            print("FAIL SAFE")
             last_resort = self.estimator.fit(X, y)
             if isinstance(last_resort, np.ndarray) and len(last_resort) == self.poly_size:
                 return last_resort
         except:
-            print("FAIL SAFE FAILED")
+            logger.debug("Full-data OLS fail safe failed.")
             return None
 
     def get_fitted(self):
@@ -238,3 +245,4 @@ class RANSACRegression():
             raise RuntimeError("ERROR: Must perform fit before calling")
         
         return self.best_inlier_count, self.inlier_ratio
+    

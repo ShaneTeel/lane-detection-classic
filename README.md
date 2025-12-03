@@ -13,7 +13,7 @@
 A classic lane line detection system that employs the following techniques:
 
 - HSL-channel Masking
-- Edge Detection
+- Feature Map production using Edge Detection or Thresholding w/ Morphological Operations
 - Inverse ROI masking
 - Probabilistic Hough Lines Transform or pixel-wise point extraction 
 - Homography (Bird's Eye View) using a manually-calculated H-matrix
@@ -138,7 +138,6 @@ This project is not meant to challenge modern approaches. It is used as a learni
 [Return to TOC](#table-of-contents)
 
 ## To-Do
-- Add logger
 - Add "Methodology" section to `README.md` with static images for each step of the pipeline
 - Add unit tests for critical modules (e.g., Kalman, RANSAC, OLS).
 

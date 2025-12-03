@@ -11,6 +11,10 @@ from .initializer import Initializer
 from .single_lane_line_detector import SingleLaneLineDetector
 from lane_detection.evaluation import RegressionEvaluator
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 def systems_factory(source:str, generator:Literal["edge", "thresh"], selector:Literal["direct", "hough"], estimator:Literal["ols", "ransac"], params:dict):
     
     if "roi" not in params.keys():
@@ -37,26 +41,6 @@ class DetectionSystem():
         Regression model for fitting lane polynomials
     **kwargs : dict
         Additional configuration parameters passed to component initializers
-        
-    Attributes
-    ----------
-    name : str
-        System identifier combining source name and estimator type
-    start : float
-        Starting y-coordinate for lane line generation
-    stop : float
-        Ending y-coordinate for lane line generation
-        
-    Examples
-    --------
-    >>> system = DetectionSystem(
-    ...     source="video.mp4",
-    ...     roi=roi_points,
-    ...     generator="edge",
-    ...     selector="hough",
-    ...     estimator="ransac"
-    ... )
-    >>> report = system.run(view_style="composite", fill=True)
     """
 
     _BOLD = "\033[1m"
@@ -81,9 +65,11 @@ class DetectionSystem():
         **kwargs : dict
             Additional configuration parameters passed to component initializers
         '''    
+        logger.debug("Initializing detection system")
+
         self.initializer = Initializer(generator, selector, estimator, **kwargs)
         
-        self.studio = self.initializer.initialize_studio(source)
+        self.studio = self.initializer.initialize_studio(source)        
         self.mask, self.bev = self.initializer.initialize_geometry(roi)
         self.generator = self.initializer.initialize_generator()
         self.selector = self.initializer.initialize_selector()

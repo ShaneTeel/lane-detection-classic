@@ -1,6 +1,9 @@
 import numpy as np
 from numpy.typing import NDArray
 from typing import Literal
+import logging
+
+logger = logging.getLogger(__name__)
     
 class KalmanFilter():
     """
@@ -57,6 +60,9 @@ class KalmanFilter():
         self.F_T = self.F.T
         self.H_T = self.H.T
 
+        logger.debug("Initialized KalmanFilter")
+        logger.debug(f"Initial state: {self.x[:self.poly_size].flatten()}")
+
     def filter_coeffs(self, coeffs:NDArray, y_range:int, n_inliers:int, inlier_ratio:float):
         """
         Apply Kalman filtering to smooth coefficient estimates.
@@ -97,7 +103,7 @@ class KalmanFilter():
         self.P = self.F @ self.P @ self.F_T + self.Q
 
         if np.trace(self.P) > 500.0:
-            print("WARNING: Kalman filter diverging, performing reset")
+            logger.warning("Kalman filter diverging, performing reset")
             self._reset(coeffs)
 
     def _update(self, coeffs:NDArray, y_range:float, n_inliers:float, inlier_ratio:float):
@@ -108,7 +114,7 @@ class KalmanFilter():
         innovation_magnitude = np.linalg.norm(innovation)
 
         if innovation_magnitude > 5.0:
-            print(f'WARNING: Large innovation {innovation_magnitude:.2f}, measurement may be outlier')
+            logger.warning(f'Large innovation {innovation_magnitude:.2f} computed, measurement may be outlier')
             return
 
         S = self.H @ self.P @ self.H_T + R
@@ -116,7 +122,7 @@ class KalmanFilter():
         try:
             K = self.P @ self.H_T @ np.linalg.inv(S)
         except np.linalg.LinAlgError:
-            print("WARNING: `S` is singular, using pseudo-inverse")
+            logger.warning("`S` is singular, using pseudo-inverse")
             K = self.P @ self.H_T @ np.linalg.pinv(S)
 
         self.x = self.x + K @ innovation
@@ -132,6 +138,10 @@ class KalmanFilter():
         self.P = self._initialize_P(self.P_primer)
     
     def _initialize_current_state(self, coeffs:NDArray):
+        if len(coeffs) < 2:
+            logger.error(f"Invalid coeffs: {len(coeffs)}. Need at least .")
+            raise ValueError(f"Need at least 2 coeffs; got {len(coeffs)}.")
+        
         top = coeffs.reshape(-1, 1)
         bottom = np.zeros_like(top)
         return np.block([

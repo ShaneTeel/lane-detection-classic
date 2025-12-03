@@ -1,7 +1,20 @@
 import numpy as np
+import logging
+
 from lane_detection.detection import GridSearch
+from lane_detection.utils import setup_logging, get_logger
+
+setup_logging(log_level=logging.WARNING,
+              log_to_file=True,
+              log_dir="../logs",
+              console_output=True)
+
+logger = get_logger(__name__)
 
 def demo_grid_search(src:str, params):
+    logger.info("="*60)
+    logger.info(f"Starting Grid Search Applicaiton for {src}")
+    logger.info("="*60)
 
     gs = GridSearch(source=src, generator="edge", selector="hough", estimator="ols", metric="r2", param_grid=grid)
 

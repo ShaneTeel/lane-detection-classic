@@ -1,7 +1,0 @@
-numpy>=2.2.6
-opencv-python>=4.10.0
-
-[dev]
-pytest>=7.0.0
-black>=22.0.0
-flake8>=4.0.0

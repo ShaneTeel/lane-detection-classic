@@ -1,7 +1,21 @@
 import numpy as np
+import logging
+
 from lane_detection.detection import DetectionSystem
+from lane_detection.utils import setup_logging, get_logger
+
+setup_logging(log_level=logging.WARNING,
+              log_to_file=True,
+              log_dir="../logs",
+              console_output=True)
+
+logger = get_logger(__name__)
 
 def demo_video(src:str, roi:np.ndarray, **kwargs):
+    logger.info("="*60)
+    logger.info(f"Starting Lane Line Detection Applicaiton for {src}")
+    logger.info("="*60)
+    
     system = DetectionSystem(
         source=src,
         roi=roi, 
