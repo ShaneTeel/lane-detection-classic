@@ -1,8 +1,15 @@
 # Lane Detection
 
+A classical computer vision approach to lane line detection that features manual **Kalman-filtering**, **RANSAC/OLS** Polynomial Regression, and **homography projection**.
+
+![Demo](media/out/readme/curved-edge-direct-demo.gif)
+
+See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu.be/AOmAQo3oTFU)
+
+**[Try Interactive Demo (streamlit)]()**
+
 ## Table-of-Contents
-- [Description / Overview](#description--overview)
-- [Demo](#demo)
+- [Key Features](#key-features)
 - [Quick Start](#quick-start)
 - [Methodology](#methodlogy)
 - [Project Structure](#project-structure)
@@ -10,26 +17,27 @@
 - [Deep Learning Alibi](#why-not-deep-learning)
 - [To-Do](#to-do)
 
-## Description / Overview
-A classic lane line detection system that employs the following techniques:
+## Key Features
+### From-Scratch Implementation
+- Kalman filter with adapative measurements for noise
+- RANSAC with dynamic iteration calculation
+- Homography via Direct Linear Transformation
+    - No camera calibration or parameters required
 
-- HSL-channel Masking
-- Feature Map production using Edge Detection or Thresholding w/ Morphological Operations
-- Inverse ROI masking
-- Probabilistic Hough Lines Transform or pixel-wise point extraction 
-- Homography (Bird's Eye View) using a manually-calculated H-matrix
-- Regression using a manually-built OLS and RANSAC
-- Temporal smoothing using a manually-calculated Kalman filter
+### Production Engineering
+- Modular architecture with interchangeable approaches
+- Pydantic paramter configuration validation
+- Comprehensive logging and testing
+- Grid search hyperparamter optimization
 
-Built to demonstrate understanding of CV pipelines without deep learning and without the use of camera calibration data. 
-
-[Return to TOC](#table-of-contents)
-
-## Demo
-
-![Demo](media/out/readme/curved-edge-direct-demo.gif)
-
-See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu.be/AOmAQo3oTFU)
+### Performance
+- **R2 Score**: 0.94-0.99, configuration dependent
+- **Speed**:
+- **Tested on**:
+    - Straight roads
+    - Curved roads
+    - Worn lane lines
+    - Variable lighting
 
 [Return to TOC](#table-of-contents)
 
@@ -73,21 +81,38 @@ print(report)
 
 ## Methodology
 
-### General Overview
+### Generalized Pipeline Overview
 ```mermaid
+---
+title: Lane Line Detection Stages
+---
 graph LR;
     A([Read Image / Video]) --> B;
-    B[HSL-Masking] --> C;
-    C[Feature Generation] --> D;
-    D[Feature Selection] --> E;
-    E{BEV?} --> |Yes| F;
-    F[Perspective Transform] --> H;
-    E{BEV?} --> |No| H;
-    H[Kalman-Filtered Regression] --> I;
-    I([Visualization]);
+    subgraph Stage 1: Image Preprocessing;
+        B[HSL-Masking] --> CA;
+        CA["Threshold + Morphology<br>(Close --> Dilate)"] --> D;
+        B[HSL-Masking] --> CB;
+        CB["Vertical Edge Detection<br>(Sobel-X)"] --> D
+        end
+    D[Inverse ROI-Masking] --> EA;
+    D[Inverse ROI-Masking] --> EB;
+    subgraph Stage 2: Data Transformation;
+        EA[Probabilistic Hough Lines Transform] --> F;
+        EB[Direct Pixel-Wise Extraction] --> F;
+        F{BEV?} --> |Yes| G;
+        G[Perspective Transform] --> H;
+        F{BEV?} --> |No| H;
+        end
+    H[Feature Scaling] --> IA;
+    H[Feature Scaling] --> IB
+    subgraph Stage 3: Dynamic Linear Modeling
+        IA["Outlier-Rejection Curve Fitting<br>(RANSAC)"] --> J;
+        IB["Outlier-Sensitive Curve Fitting<br>(OLS)"] --> J;
+        J["Temporal Lane Tracking<br>(Kalman-Filter)"] --> K;
+        end
+    K[Extrapolated Lane-Line Prediction] --> L;
+    L([Visualization]);
 ```
-### Example Outputs
-
 
 [Return to TOC](#table-of-contents)
 
