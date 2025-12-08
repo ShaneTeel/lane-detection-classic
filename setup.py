@@ -1,4 +1,11 @@
 from setuptools import setup, find_packages
+import os
+
+def read_requirements(file:str="requirements.txt"):
+    if not os.path.exists(file):
+        return []
+    with open(file, "r", encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -21,10 +28,7 @@ setup(
         "Operating System :: OS Independent"
     ],
     python_requires=">=3.8",
-    install_requires=[
-        "numpy>=2.2.6",
-        "opencv-python>=4.10.0"
-    ],
+    install_requires=read_requirements("requirements.txt"),
     extras_require={
         "dev": [
             "pytest>=7.0.0",

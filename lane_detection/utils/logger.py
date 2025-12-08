@@ -5,7 +5,7 @@ from datetime import datetime
 
 def setup_logging(log_level=logging.INFO,
                   log_to_file=True,
-                  log_dir="logs",
+                  log_dir="logs/lane_detection",
                   console_output=True):
     '''
     Description

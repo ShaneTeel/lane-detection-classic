@@ -4,6 +4,7 @@
 - [Description / Overview](#description--overview)
 - [Demo](#demo)
 - [Quick Start](#quick-start)
+- [Methodology](#methodlogy)
 - [Project Structure](#project-structure)
 - [Trade-Offs](#trade-offs)
 - [Deep Learning Alibi](#why-not-deep-learning)
@@ -68,6 +69,24 @@ report = system.run("composite", stroke=False, fill=True)
 
 print(report)
 ```
+[Return to TOC](#table-of-contents)
+
+## Methodlogy
+
+### General Overview
+```mermaid 
+graph LR;
+    A([Read Image / Video]) --> B;
+    B[HSL-Masking] --> C;
+    C[Feature Generation] --> D;
+    D[Feature Selection] --> E;
+    E{BEV?} --> |Yes| F;
+    F[Perspective Transform] --> H;
+    E{BEV?} --> |No| H;
+    H[Kalman-Filtered Regression] --> I;
+    I([Visualization]);
+```
+
 [Return to TOC](#table-of-contents)
 
 ## Project Structure
