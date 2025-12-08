@@ -12,7 +12,7 @@ A classical approach to lane line detection featuring:
 - [Project Structure](#project-structure)
 - [Methodology](#methodlogy)
 - [Trade-Offs](#trade-offs)
-- [Deep Learning Alibi](#why-not-deep-learning)
+- [Classical vs. Deep Learning](#classical-vs-deep-learning)
 - [To-Do](#to-do)
 
 ## Demo / Examples
