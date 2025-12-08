@@ -21,7 +21,9 @@ class Initializer():
         self.estimator = estimator
         self.configs = self._initialize_configs(user_selection, **kwargs)
 
-    def initialize_studio(self, source:Union[str, int]):
+    def initialize_studio(self, source:Union[str, int, StudioManager]):
+        if isinstance(source, StudioManager):
+            return source
         studio = StudioManager(source)
         self.fps, _, _ = studio.get_metadata()
         return studio

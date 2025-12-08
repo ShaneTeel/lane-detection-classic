@@ -1,8 +1,9 @@
 import cv2
 import os
-import logging
+import tempfile
+from lane_detection.utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class Reader():
 

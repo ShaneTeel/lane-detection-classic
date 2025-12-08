@@ -5,8 +5,9 @@ import logging
 
 from lane_detection.scalers import MinMaxScaler, StandardScaler
 from .models import OLSRegression, RANSACRegression, KalmanFilter
+from lane_detection.utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class SingleLaneLineDetector():
     """

@@ -8,12 +8,12 @@ from typing import Literal, Union
 
 # Package-internal module
 from .initializer import Initializer
+from lane_detection.studio import StudioManager
 from .single_lane_line_detector import SingleLaneLineDetector
 from lane_detection.evaluation import RegressionEvaluator
+from lane_detection.utils import get_logger
 
-import logging
-
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def systems_factory(source:str, generator:Literal["edge", "thresh"], selector:Literal["direct", "hough"], estimator:Literal["ols", "ransac"], params:dict):
     
@@ -48,7 +48,7 @@ class DetectionSystem():
     _UNDERLINE = "\033[4m"
     _END = "\033[0m"
 
-    def __init__(self, source:Union[str, int], roi:NDArray, generator:Literal["edge", "thresh"], selector:Literal["direct", "hough"], estimator:Literal["ols", "ransac"], **kwargs):        
+    def __init__(self, source:Union[str, int, StudioManager], roi:NDArray, generator:Literal["edge", "thresh"], selector:Literal["direct", "hough"], estimator:Literal["ols", "ransac"], **kwargs):        
         '''
         Parameters
         ----------
@@ -91,7 +91,6 @@ class DetectionSystem():
             Preview display mode
         """
         frame_names = self._configure_output(view_style, False, method="preview")
-        
         while True and not self.exit:
             ret, frame = self.studio.return_frame()
             if not ret:

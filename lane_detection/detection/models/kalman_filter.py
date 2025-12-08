@@ -1,9 +1,9 @@
 import numpy as np
 from numpy.typing import NDArray
 from typing import Literal
-import logging
+from lane_detection.utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
     
 class KalmanFilter():
     """

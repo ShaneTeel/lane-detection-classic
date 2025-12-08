@@ -1,9 +1,9 @@
     
 import cv2
 import numpy as np
-import logging
+from lane_detection.utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class Illustrator:
     '''Superimposes shapes/lines on an image'''

@@ -1,8 +1,6 @@
 import cv2
-import numpy as np
 from numpy.typing import NDArray
 from typing import Literal
-from .vert_edge_map_generator import VerticalEdgeMapGenerator
 from lane_detection.utils.constants import (
     THRESH_WHITE_LOWER, THRESH_WHITE_UPPER,
     THRESH_YELLOW_LOWER, THRESH_YELLOW_UPPER
