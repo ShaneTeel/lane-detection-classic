@@ -26,17 +26,13 @@ A classical approach to lane line detection featuring:
 
 ```html
 Regression
-|-------------------------------------------|
-| Metrics |   Left    |   Right  |   Avg.   |
-|-------------------------------------------|
-| R2      |  0.9806   |  0.9859  |  0.9832  |
-| RMSE    |  10.1696  |  8.5702  |  9.3699  |
-| MAE     |  8.4617   |  7.0495  |  7.7556  |
-|-------------------------------------------|
-
-Speed
-FPS - (w/ BEV), (w/ out BEV)
-
+|--------------------------------------------|
+| Metric   |   Left    |   Right  |   Avg.   |
+|--------------------------------------------|
+| R2       |  0.9806   |  0.9859  |  0.9832  |
+| RMSE     |  10.1696  |  8.5702  |  9.3699  |
+| MAE      |  8.4617   |  7.0495  |  7.7556  |
+|--------------------------------------------|
 ```
 
 See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu.be/AOmAQo3oTFU)
@@ -205,13 +201,26 @@ graph LR;
 
 [Return to TOC](#table-of-contents)
 
-## Why Not Deep Learning?
+## Classical vs. Deep Learning
+This project demonstrates **fundamental understanding** of classical computer vision techniques.
 
-This project is not meant to challenge modern approaches. It is used as a learning exercise to advance author's understanding of the following:
-- Classic computer vision pipelines.
-- Basic image preprocessing steps.
-- Manual application of Kalman, Homography, and Regression.
-- Building modular systems.
+### Benefits of Classical CV
+
+**The User Can Learn**:
+- Coordinate transformation (homography)
+- State estimation and filtering (Kalman)
+- Robust regression techniques (outlier-rejection w/ RANSAC)
+- Production system design (modularity, testing, logging, etc.)
+
+**When to Use Classical**:
+- System is resource constrained
+- Interpretebility is critical
+- Edge deployments, or more to the point, when a GPU is not needed
+- Edge cases that challenge failure response
+
+**Coming Soon!**: Comparitive analysis with YOLOv8 implementation
+- Following implementation, author will update with a more thorough examination of the two approaches (classic vs deep learning).
+
 
 [Return to TOC](#table-of-contents)
 
