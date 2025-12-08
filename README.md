@@ -88,7 +88,7 @@ title: Lane Line Detection Stages
 ---
 graph LR;
     A([Read Image / Video]) --> B;
-    subgraph Stage 1: Image Preprocessing;
+    subgraph Image Preprocessing;
         B[HSL-Masking] --> CA;
         CA["Threshold + Morphology<br>(Close --> Dilate)"] --> D;
         B[HSL-Masking] --> CB;
@@ -96,7 +96,7 @@ graph LR;
         end
     D[Inverse ROI-Masking] --> EA;
     D[Inverse ROI-Masking] --> EB;
-    subgraph Stage 2: Data Transformation;
+    subgraph Data Transformation;
         EA[Probabilistic Hough Lines Transform] --> F;
         EB[Direct Pixel-Wise Extraction] --> F;
         F{BEV?} --> |Yes| G;
@@ -105,7 +105,7 @@ graph LR;
         end
     H[Feature Scaling] --> IA;
     H[Feature Scaling] --> IB
-    subgraph Stage 3: Dynamic Linear Modeling
+    subgraph Dynamic Linear Modeling
         IA["Outlier-Rejection Curve Fitting<br>(RANSAC)"] --> J;
         IB["Outlier-Sensitive Curve Fitting<br>(OLS)"] --> J;
         J["Temporal Lane Tracking<br>(Kalman-Filter)"] --> K;
