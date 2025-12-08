@@ -123,7 +123,7 @@ lane_detection/
 ## Methodology
 
 ### Pipeline Overview
-```mermaid
+```mermaid 
 ---
 title: Lane Line Detection Stages
 ---
