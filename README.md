@@ -1,21 +1,47 @@
 # Lane Detection
 
-A classical computer vision approach to lane line detection that features manual **Kalman-filtering**, **RANSAC/OLS** Polynomial Regression, and **homography projection**.
-
-![Demo](media/out/readme/curved-edge-direct-demo.gif)
-
-See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu.be/AOmAQo3oTFU)
-
-**[Try Interactive Demo (streamlit)]()**
+A classical approach to lane line detection featuring:
+- Manual Kalman-filtering
+- RANSAC/OLS Polynomial Regression
+- Homography-calculation and projection
 
 ## Table-of-Contents
+- [Demo / Examples](#demo--examples)
 - [Key Features](#key-features)
 - [Quick Start](#quick-start)
-- [Methodology](#methodlogy)
 - [Project Structure](#project-structure)
+- [Methodology](#methodlogy)
 - [Trade-Offs](#trade-offs)
 - [Deep Learning Alibi](#why-not-deep-learning)
 - [To-Do](#to-do)
+
+## Demo / Examples
+### Curved Road Example w/ Results
+**Visual Output**
+
+![Curved Example](media/out/readme/curved-edge-direct-demo.gif)
+
+**Performance Evaluation**
+
+
+```html
+<u>Regression</u>
+|-------------------------------------------|
+| Metrics |   Left    |   Right  |   Avg.   |
+|-------------------------------------------|
+| R2      |  0.9806   |  0.9859  |  0.9832  |
+| RMSE    |  10.1696  |  8.5702  |  9.3699  |
+| MAE     |  8.4617   |  7.0495  |  7.7556  |
+|-------------------------------------------|
+
+Speed
+FPS - (w/ BEV), (w/ out BEV)
+
+```
+
+See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu.be/AOmAQo3oTFU)
+
+[Return to TOC](#table-of-contents)
 
 ## Key Features
 ### From-Scratch Implementation
@@ -25,10 +51,15 @@ See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu
     - No camera calibration or parameters required
 
 ### Production Engineering
-- Modular architecture with interchangeable approaches
+- Modular architecture with interchangeable steps
 - Pydantic paramter configuration validation
-- Comprehensive logging and testing
+- Comprehensive logging
 - Grid search hyperparamter optimization
+
+### Flexible Pipeline
+- Customizable approaches (edge/thresh, direct/hough, ols/ransac)
+- Optional bird's eye view projection of extracted features
+- Real-time video processing with temporal smoothing
 
 ### Performance
 - **R2 Score**: 0.94-0.99, configuration dependent
@@ -79,42 +110,6 @@ print(report)
 ```
 [Return to TOC](#table-of-contents)
 
-## Methodology
-
-### Generalized Pipeline Overview
-```mermaid
----
-title: Lane Line Detection Stages
----
-graph LR;
-    A([Read Image / Video]) --> B;
-    subgraph Image Preprocessing;
-        B[HSL-Masking] --> CA;
-        CA["Threshold + Morphology<br>(Close --> Dilate)"] --> D;
-        B[HSL-Masking] --> CB;
-        CB["Vertical Edge Detection<br>(Sobel-X)"] --> D
-        end
-    D[Inverse ROI-Masking] --> EA;
-    D[Inverse ROI-Masking] --> EB;
-    subgraph Data Transformation;
-        EA[Probabilistic Hough Lines Transform] --> F;
-        EB[Direct Pixel-Wise Extraction] --> F;
-        F{BEV?} --> |Yes| G;
-        G[Perspective Transform] --> H;
-        F{BEV?} --> |No| H;
-        end
-    H[Feature Scaling] --> IA;
-    H[Feature Scaling] --> IB
-    subgraph Dynamic Linear Modeling
-        IA["Outlier-Rejection Curve Fitting<br>(RANSAC)"] --> J;
-        IB["Outlier-Sensitive Curve Fitting<br>(OLS)"] --> J;
-        J["Temporal Lane Tracking<br>(Kalman-Filter)"] --> K;
-        end
-    K[Extrapolated Lane-Line Prediction] --> L;
-    L([Visualization]);
-```
-
-[Return to TOC](#table-of-contents)
 
 ## Project Structure
 ```
@@ -127,6 +122,43 @@ lane_detection/
 |-- image_geometry/      # ROI mask, BEV projection
 |-- studio/              # Visualization
 ```
+[Return to TOC](#table-of-contents)
+
+## Methodology
+
+### Pipeline Overview
+```mermaid
+---
+title: Lane Line Detection Stages
+---
+graph LR;
+    A([Read Image / Video]) --> B;
+    subgraph Feature Generation;
+        B[HSL-Masking] --> CA;
+        CA["Threshold + Morphology<br>(Close --> Dilate)"] --> D;
+        B[HSL-Masking] --> CB;
+        CB["Vertical Edge Detection<br>(Sobel-X)"] --> D
+        end
+    D[Inverse ROI-Masking] --> EA;
+    D[Inverse ROI-Masking] --> EB;
+    subgraph Feature Transformation;
+        EA[Probabilistic Hough Lines Transform] --> F;
+        EB[Direct Pixel-Wise Extraction] --> F;
+        F{BEV?} --> |Yes| G;
+        F{BEV?} --> |No| H;
+        G[Perspective Transform] --> H;
+        end
+    H[Feature Scaling] --> IA;
+    H[Feature Scaling] --> IB
+    subgraph Dynamic Linear Modeling
+        IA["Outlier-Rejection Curve Fitting<br>(RANSAC)"] --> J;
+        IB["Outlier-Sensitive Curve Fitting<br>(OLS)"] --> J;
+        J["Temporal Lane Tracking<br>(Kalman-Filter)"] --> K;
+        end
+    K[Extrapolated Lane-Line Prediction] --> L;
+    L([Visualization]);
+```
+
 [Return to TOC](#table-of-contents)
 
 ## Trade-Offs
@@ -184,7 +216,7 @@ This project is not meant to challenge modern approaches. It is used as a learni
 [Return to TOC](#table-of-contents)
 
 ## To-Do
-- Add "Methodology" section to `README.md` with static images for each step of the pipeline
-- Add unit tests for critical modules (e.g., Kalman, RANSAC, OLS).
+- Finish Streamlit app for demo [coming soon!]
+- Add unit tests for critical modules (e.g., Kalman, RANSAC, OLS, BEV/Homography).
 
 [Return to TOC](#table-of-contents)
