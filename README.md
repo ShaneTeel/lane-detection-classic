@@ -71,10 +71,10 @@ print(report)
 ```
 [Return to TOC](#table-of-contents)
 
-## Methodlogy
+## Methodology
 
 ### General Overview
-```mermaid 
+```mermaid
 graph LR;
     A([Read Image / Video]) --> B;
     B[HSL-Masking] --> C;
@@ -86,6 +86,8 @@ graph LR;
     H[Kalman-Filtered Regression] --> I;
     I([Visualization]);
 ```
+### Example Outputs
+
 
 [Return to TOC](#table-of-contents)
 
