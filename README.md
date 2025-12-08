@@ -25,7 +25,7 @@ A classical approach to lane line detection featuring:
 
 
 ```html
-<u>Regression</u>
+Regression
 |-------------------------------------------|
 | Metrics |   Left    |   Right  |   Avg.   |
 |-------------------------------------------|
