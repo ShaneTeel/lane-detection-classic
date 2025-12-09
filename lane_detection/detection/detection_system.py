@@ -9,6 +9,7 @@ from typing import Literal, Union
 # Package-internal module
 from .initializer import Initializer
 from lane_detection.studio import StudioManager
+from lane_detection.image_geometry import ROIMasker
 from .single_lane_line_detector import SingleLaneLineDetector
 from lane_detection.evaluation import RegressionEvaluator
 from lane_detection.utils import get_logger
@@ -48,7 +49,7 @@ class DetectionSystem():
     _UNDERLINE = "\033[4m"
     _END = "\033[0m"
 
-    def __init__(self, source:Union[str, int, StudioManager], roi:NDArray, generator:Literal["edge", "thresh"], selector:Literal["direct", "hough"], estimator:Literal["ols", "ransac"], **kwargs):        
+    def __init__(self, source:Union[str, int, StudioManager], roi:Union[NDArray, ROIMasker], generator:Literal["edge", "thresh"], selector:Literal["direct", "hough"], estimator:Literal["ols", "ransac"], **kwargs):        
         '''
         Parameters
         ----------

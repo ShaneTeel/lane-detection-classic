@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Response, File, UploadFile
 from fastapi.responses import StreamingResponse
+import numpy as np
 import cv2
 import io
 import base64
@@ -7,6 +8,7 @@ import asyncio
 import tempfile
 import shutil
 from lane_detection.studio import StudioManager
+from lane_detection.image_geometry import ROIMasker
 from lane_detection.detection import DetectionSystem
 
 app = FastAPI()
@@ -53,6 +55,7 @@ def create_source(file: UploadFile = File(...)):
             error = f"Error: Could not read frame from {studio.source.name}"
             raise HTTPException(status_code=500, detail=error)
         else:
+            frame = studio.render._resize_frame(frame, 750)
             ret, im = cv2.imencode(".jpeg", frame)
             return Response(im.tobytes(), media_type="image/jpeg")
 
@@ -61,33 +64,32 @@ def create_source(file: UploadFile = File(...)):
 
 @app.post("/roi")
 def define_roi(request: dict):
-    points = request.get("points")
+    points = np.array(request.get("points"))
     method = request.get("method")
 
-    top = min(*[y for _, y in [point for point in points]])
-    bottom = max(*[y for _, y in [point for point in points]])
-    mid_y = sum([top, bottom]) // 2
+    # top = min(*[y for _, y in [point for point in points]])
+    # bottom = max(*[y for _, y in [point for point in points]])
+    # mid_y = sum([top, bottom]) // 2
 
-    left = min(*[x for x, _ in [point for point in points]])
-    right = max(*[x for x, _ in [point for point in points]])
-    mid_x = sum([left, right]) // 2
-
-    roi = [1, 2, 3, 4]
+    # left = min(*[x for x, _ in [point for point in points]])
+    # right = max(*[x for x, _ in [point for point in points]])
+    # mid_x = sum([left, right]) // 2
+    roi = ROIMasker(points)
     
-    for point in points:
-        x, y = point
-        if x < mid_x and y < mid_y:
-            roi[0] = point if method == 'original' else (x, top)
-        elif x > mid_x and y < mid_y:
-            roi[1] = point if method == 'original' else (x, top)
-        elif x > mid_x and y > mid_y:
-            roi[2] = point if method == 'original' else (x, bottom)
-        elif x < mid_x and y > mid_y:
-            roi[3] = point if method == 'original' else (x, bottom)
+    # for point in points:
+    #     x, y = point
+    #     if x < mid_x and y < mid_y:
+    #         roi[0] = point if method == 'original' else (x, top)
+    #     elif x > mid_x and y < mid_y:
+    #         roi[1] = point if method == 'original' else (x, top)
+    #     elif x > mid_x and y > mid_y:
+    #         roi[2] = point if method == 'original' else (x, bottom)
+    #     elif x < mid_x and y > mid_y:
+    #         roi[3] = point if method == 'original' else (x, bottom)
 
     state.roi = roi
 
-    return {"poly": roi}
+    return {"poly": roi.src_pts.tolist()}
 
 @app.post("/configure")
 def configure_processor(request: dict):

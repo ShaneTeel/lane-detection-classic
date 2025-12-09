@@ -28,8 +28,8 @@ class Initializer():
         self.fps, _, _ = studio.get_metadata()
         return studio
     
-    def initialize_geometry(self, roi:NDArray):
-        masker = ROIMasker(roi)
+    def initialize_geometry(self, roi:NDArray | ROIMasker):
+        masker = roi if isinstance(roi, ROIMasker) else ROIMasker(roi)
         if not self.configs.use_bev:
             return masker, None
         src_pts = masker.get_src_pts()

@@ -94,7 +94,7 @@ if st.session_state['file'] is not None:
 
     # ROI Sub-Block
     with cols1[0]:
-        cols1P = st.columns([9, 1])
+        cols1P = st.columns([9, 2])
 
         with cols1P[0]:
             st.subheader("Select a Region of Interest* (ROI)")
@@ -103,6 +103,7 @@ if st.session_state['file'] is not None:
         with cols1P[1]:
             st.write(" ")
             reset = st.button("Reset", type='primary')
+            normalize = st.button("Normalize", type="secondary")
 
         # Create ROI Window
         if st.session_state['roi_window'] is None:
@@ -125,12 +126,16 @@ if st.session_state['file'] is not None:
 
                 if len(st.session_state['click_points']) == 4:
                     points = st.session_state.get('click_points')
-                    roi_payload = {"points": points, "method": "original"}
+                    if normalize:
+                        roi_payload = {"points": points, "method": "normalize"}
+                    else:
+                        roi_payload = {"points": points, "method": "original"}
                     try:
                         response = requests.post(f"{BACKEND_URL}/roi", json=roi_payload)
                         response.raise_for_status()
                         poly_lst = response.json().get("poly")
-                        orig_poly = [(x, y) for x, y in [point for point in poly_lst]]
+
+                        orig_poly = [(x, y) for point in poly_lst for x, y in point]
                         st.session_state['roi_poly'] = orig_poly
                         draw.polygon(orig_poly, outline=(255, 255, 0), width=5)
                         if not st.session_state['roi_rerun']:
