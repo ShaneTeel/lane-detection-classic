@@ -59,7 +59,6 @@ See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu
 
 ### Performance
 - **R2 Score**: 0.94-0.99, configuration dependent
-- **Speed**:
 - **Tested on**:
     - Straight roads
     - Curved roads
@@ -225,7 +224,7 @@ This project demonstrates **fundamental understanding** of classical computer vi
 [Return to TOC](#table-of-contents)
 
 ## To-Do
-- Finish Streamlit app for demo [coming soon!]
+- Finish Streamlit app for demo [coming soon! Development occuring in 'streamlit' branch]
 - Add unit tests for critical modules (e.g., Kalman, RANSAC, OLS, BEV/Homography).
 
 [Return to TOC](#table-of-contents)
