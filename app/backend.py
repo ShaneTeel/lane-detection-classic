@@ -16,8 +16,8 @@ app = FastAPI()
 class AppState:
 
     def __init__(self):
-        self.roi = None
-        self.processor = None
+        self.mask = None
+        self.system = None
         self.studio = None
         self.play_flag = None
 
@@ -38,18 +38,18 @@ def health_check():
     return {"status": "healthy"}
 
 @app.post("/initialize")
-def create_source(file: UploadFile = File(...)):
+async def initialize_source(file: UploadFile = File(...)):
+    
     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_file:
         try:
             shutil.copyfileobj(file.file, temp_file)
             temp_file_path = temp_file.name
         finally:
-            file.close()
+            await file.close()
 
     try:
         studio = StudioManager(temp_file_path)
         state.studio = studio
-
         ret, frame = studio.return_frame()
         if not ret:
             error = f"Error: Could not read frame from {studio.source.name}"
@@ -65,61 +65,54 @@ def create_source(file: UploadFile = File(...)):
 @app.post("/roi")
 def define_roi(request: dict):
     points = np.array(request.get("points"))
-    method = request.get("method")
 
-    # top = min(*[y for _, y in [point for point in points]])
-    # bottom = max(*[y for _, y in [point for point in points]])
-    # mid_y = sum([top, bottom]) // 2
-
-    # left = min(*[x for x, _ in [point for point in points]])
-    # right = max(*[x for x, _ in [point for point in points]])
-    # mid_x = sum([left, right]) // 2
-    roi = ROIMasker(points)
+    mask = ROIMasker(points)
     
-    # for point in points:
-    #     x, y = point
-    #     if x < mid_x and y < mid_y:
-    #         roi[0] = point if method == 'original' else (x, top)
-    #     elif x > mid_x and y < mid_y:
-    #         roi[1] = point if method == 'original' else (x, top)
-    #     elif x > mid_x and y > mid_y:
-    #         roi[2] = point if method == 'original' else (x, bottom)
-    #     elif x < mid_x and y > mid_y:
-    #         roi[3] = point if method == 'original' else (x, bottom)
+    state.mask = mask
 
-    state.roi = roi
-
-    return {"poly": roi.src_pts.tolist()}
+    return {"poly": mask.src_pts.astype(int).tolist()}
 
 @app.post("/configure")
-def configure_processor(request: dict):
+def configure_system(request: dict):
     try:
-        processor = CannyHoughP(state.roi, request)
-        state.processor = processor
+        system = DetectionSystem(state.studio, state.mask, **request)
+        state.system = system
         
     except Exception as e:
         error = f"Error occured while processing frames: {str(e)}"
         raise HTTPException(status_code=500, detail=error)
 
-async def render_frame(style: str, state: AppState = state):
+async def run_detection(style: str, state: AppState = state):
     state.play_flag = True
-    state.source.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-
-    frame_names = ["Threshold", "Edge Map", "Hough Lines", "Final Composite"]
+    system = state.system
+    system.studio.source.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    frame_names = system._configure_output(style, None, method="final")
 
     while state.play_flag:
-        ret1, raw = state.source.return_frame()
+        ret1, raw = system.studio.return_frame()
         if not ret1:
-            state.source.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            continue
+            stop_video()
 
-        thresh, edge, hough, composite = state.processor.run(raw)
-        if style == 'Step-by-Step':
-            frame = state.render.render_mosaic([thresh, edge, hough, composite], frame_names)
-        else:
-            frame = composite
+        raw_resized = system.studio.render._resize_frame(raw, 750)
+        thresh, feature_map = system.generator.generate(raw_resized)
+        masked = system.mask.inverse_mask(feature_map)
+        lane_pts = system.selector.select(masked)
+        lane_lines = []
+        for i in range(2):
+            detector = system.detector1 if i == 0 else system.detector2
+            evaluator = system.evaluator1 if i == 0 else system.evaluator2
+            if lane_pts[i].size == 0:
+                continue
+
+            pts = lane_pts[i]
+
+            line = system.detect_line(pts, detector)
+            lane_lines.append(np.flipud(line)) if i == 0 else lane_lines.append(line)
+            system.evaluate_model(detector, evaluator)
+        frame_lst = [raw_resized, thresh, feature_map, masked]
+        final = system.studio.gen_view(frame_lst, frame_names, lane_lines, style, stroke=False, fill=True)
+        ret2, buffer = cv2.imencode(".jpg", final)
         
-        ret2, buffer = cv2.imencode(".jpg", frame)
         if not ret2:
             continue
 
@@ -132,7 +125,7 @@ async def render_frame(style: str, state: AppState = state):
 def stream_video(style: str):
     try:
         return StreamingResponse(
-            content=render_frame(style),
+            content=run_detection(style),
             media_type='multipart/x-mixed-replace; boundary=frame'
         )
         

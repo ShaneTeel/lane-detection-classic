@@ -69,7 +69,6 @@ class DetectionSystem():
         logger.debug("Initializing detection system")
 
         self.initializer = Initializer(generator, selector, estimator, **kwargs)
-        
         self.studio = self.initializer.initialize_studio(source)        
         self.mask, self.bev = self.initializer.initialize_geometry(roi)
         self.generator = self.initializer.initialize_generator()

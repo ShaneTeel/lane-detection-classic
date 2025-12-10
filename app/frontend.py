@@ -20,7 +20,7 @@ def add_point():
         st.session_state['click_points'].append(point)
 
 # Page Layout
-st.set_page_config(layout='wide')
+st.set_page_config(layout="wide")
 
 # Destructor Attributes
 if 'reset' not in st.session_state:
@@ -89,7 +89,7 @@ if uploaded_file is not None and uploaded_file != st.session_state['file']:
 
 # Model Configuration Block
 if st.session_state['file'] is not None:
-    st.header("Step 1: Configure Model")
+    st.header("Step 1: Configure System")
     cols1 = st.columns(2, border=True)
 
     # ROI Sub-Block
@@ -99,11 +99,9 @@ if st.session_state['file'] is not None:
         with cols1P[0]:
             st.subheader("Select a Region of Interest* (ROI)")
             st.markdown("**Move cursor over image and right-click at four different points on the image.**")
-            st.write("**The ROI is the area of the frame that the Lane Detection model is run against.*")
         with cols1P[1]:
             st.write(" ")
             reset = st.button("Reset", type='primary')
-            normalize = st.button("Normalize", type="secondary")
 
         # Create ROI Window
         if st.session_state['roi_window'] is None:
@@ -115,7 +113,6 @@ if st.session_state['file'] is not None:
             try:
                 if st.session_state['poly_img'] is None:
                     poly_img = st.session_state.get("roi_frame")
-                    w, h = poly_img.size
                     st.session_state['poly_img'] = poly_img.copy()
                 
                 img_draw = st.session_state.get("poly_img")
@@ -126,10 +123,7 @@ if st.session_state['file'] is not None:
 
                 if len(st.session_state['click_points']) == 4:
                     points = st.session_state.get('click_points')
-                    if normalize:
-                        roi_payload = {"points": points, "method": "normalize"}
-                    else:
-                        roi_payload = {"points": points, "method": "original"}
+                    roi_payload = {"points": points}
                     try:
                         response = requests.post(f"{BACKEND_URL}/roi", json=roi_payload)
                         response.raise_for_status()
@@ -141,6 +135,14 @@ if st.session_state['file'] is not None:
                         if not st.session_state['roi_rerun']:
                             st.session_state['roi_rerun'] = True
                             st.rerun()
+
+                        st.markdown("**Selected ROI**")
+                        if st.session_state['roi_poly'] is not None:
+                            names = ["Bottom-Left", "Bottom-Right", "Top-Left", "Top-Right"]
+                            roi_poly = {name: point for name, point in zip(names, orig_poly)}
+                            df = pd.DataFrame(roi_poly)
+                            df.index = ["x", "y"]
+                            st.table(df, border='horizontal')
                         
                     except requests.exceptions.RequestException as e:
                         st.error(f"Error connecting to Original ROI service: {str(e)}")
@@ -160,106 +162,114 @@ if st.session_state['file'] is not None:
     # Parameter Block
     with cols1[1]:
         st.subheader("Set Parameters")
+        feature_cols = st.columns(2)
 
-        # ROI Selection
-        cols1A = st.columns(2)
-        with cols1A[0]:
-            st.markdown("**Selected ROI**")
-            if st.session_state['roi_poly'] is not None:
-                names = ["Top-Left", "Top-Right", "Bottom-Right", "Bottom-Left"]
-                roi_poly = st.session_state.get("roi_poly")
-                roi_poly = {name: point for name, point in zip(names, points)}
-                df = pd.DataFrame(roi_poly)
-                df.index = ["x", "y"]
-                st.table(df, border='horizontal')
+        # Feature Generation Input
+        with feature_cols[0]:
+            st.markdown("##### Feature Generation")
+            feature_gen = st.radio("Select Feature Generator", ["edge", "thresh"], horizontal=True, index=0)
+            if feature_gen == "edge":
+                ksize = st.select_slider("Blur & Canny Kernel Size", [3, 5, 7, 9, 11, 13, 15], value=5)
+            else:
+                cols1Ab = st.columns(2)
+                with cols1Ab[0]:
+                    small_ksize = st.select_slider("Close Kernel Size", [3, 5, 7, 9, 11, 13, 15], value=5)
+                with cols1Ab[1]:
+                    large_ksize = st.select_slider("Dilate Kernel Size", [11, 13, 15, 17, 19, 21], value=15)
 
-        # Thresholding Input (cv2.inRange())
-        with cols1A[1]:
-            st.markdown("**Thresholding**")
-            lower_bounds, upper_bounds = st.slider("Lower / Upper (Inclusive)", min_value=0, max_value=255, value=(150, 255))
+        # Feature Selection Input
+        with feature_cols[1]:
+            st.markdown("##### Feature Selection")
+            feature_sel = st.radio("Select Feature Extractor", ["hough", "direct"], horizontal=True, index=1)
+            if feature_sel == "hough":
+                hough_cols = st.columns(3)
+                h, w = st.session_state["roi_frame"].size
+                diag = (w**2 + h**2)**0.5
+                area = w * h
+                with hough_cols[0]:
+                    min_votes = st.number_input("Min. Votes", min_value=1, max_value=area, value=50)
+                with hough_cols[1]:
+                    min_length = st.number_input("Min. Line Length", min_value=1, max_value=int(diag), value=10)
+                with hough_cols[2]:
+                    max_gap = st.number_input("Max Line Gap", min_value=0, max_value=int(diag), value=20)
+            else:
+                n_std = st.number_input("Number of Standard Deviations to Filter", min_value=0.5, max_value=10.0, value=2.0)        
+        st.markdown("##### Dynamic Linear Modeling")
+        model_cols = st.columns(3)
+        with model_cols[0]:
+            st.caption("Transformation Options")
+            scaler = st.radio("Select Scaler", ["min_max", "z_score"], horizontal=True, index=1)
+            use_bev = st.radio("Use BEV?", [True, False], horizontal=True, index=0)
+            if use_bev:
+                bev_cols = st.columns(3)
+                with bev_cols[0]:
+                    forward_range = st.number_input("Forward", min_value=0.0, max_value=100.0, value=40.0)
+                with bev_cols[1]:
+                    lateral_range = st.number_input("Lateral", min_value=0.0, max_value=100.0, value=7.0)
+                with bev_cols[2]:
+                    resolution = st.number_input("GSD", min_value=0.01, max_value=1.0, value=0.3)
 
-        # Canny Input (cv2.Canny())
-        st.markdown("**Canny Edge Detection**")
-        cols1B = st.columns(2)
-        with cols1B[0]:
-            blur_first = st.selectbox("Gaussian Blur", ["Before Canny", "After Canny", "No Blur"], help="Whether to perform Gaussian Blur before edge detection, after edge detection, or not at all.")
-        with cols1B[1]:
-            canny_low, canny_high = st.slider("Weak / Sure Edge (Inclusive)", min_value=0, max_value=300, value=(50, 150))
+        with model_cols[1]:
+            st.caption("Estimator Options")
+            estimator = st.radio(label="Select Estimator", options=["ols", "ransac"], horizontal=True, index=0)
+            degree = st.radio("Select Degree", [1, 2, 3], horizontal=True, index=2)
+            if estimator == "ransac":
+                ransac_cols = st.columns(3)
+                with ransac_cols[0]:
+                    confidence = st.number_input("Probability", min_value=0.0, max_value=1.0, value=0.5)
+                with ransac_cols[1]:
+                    min_inliers = st.number_input("Min. Inliers", min_value=0.0, max_value=1.0, value=0.8)
+                with ransac_cols[2]:
+                    max_error = st.number_input("Max Error", min_value=0, value=10)
 
-        # Hough Input (cv2.HoughLinesP())
-        st.markdown("**Probabilistic Hough Line Transform**")
-        cols1C = st.columns(5)
-        with cols1C[0]:
-            w, h, = st.session_state['roi_frame'].size
-            diag = (w**2 + h**2)**0.5
-            area = w * h
-            rho = st.number_input("Rho (ρ)", min_value=0.1, max_value=diag, value=1.0)
-        with cols1C[1]:
-            theta = st.number_input("Theta (θ)", min_value=0, max_value=180, value=180, help="Value will be divided by π once passed to model.")
-        with cols1C[2]:
-            min_votes = st.number_input("Threshold", min_value=1, max_value=area, value=50)
-        with cols1C[3]:
-            min_line_length = st.number_input("Min. Line Length", min_value=1, max_value=int(diag), value=10)
-        with cols1C[4]:
-            max_line_gap = st.number_input("Max Line Gap", min_value=0, max_value=int(diag), value=20)
-        
-        st.markdown("**Composite Styling***")
-        cols1D = st.columns(4)
-        with cols1D[0]:
-            stroke_bool = st.checkbox("Draw Lane Lines (Stroke)", value=True)
-        with cols1D[1]:
-            if stroke_bool:
-                stroke_color = st.color_picker("Stroke Color", value="#FF0000")
-        with cols1D[2]:
-            fill_bool = st.checkbox("Draw Lane Area (Fill)", value=True)
-        with cols1D[3]:
-            if fill_bool:
-                fill_color = st.color_picker("Fill Color", value="#00FF00")
-        cols1E = st.columns(3)
-        with cols1E[0]:
-            st.write("*Style options do not affect the algorithm.")
-        with cols1E[2]:
-            configure = st.button("Configure System", type='secondary')
+        with model_cols[2]:
+            st.caption("Kalman Options")
+            P_primer = st.number_input("Initial Confidence", min_value=0.0, max_value=0.99, value=0.5)
+            process_noise = st.radio("Process Noise (Environment)", ["low", "medium", "high"], horizontal=True)
+        st.text("")
+        configure = st.button("Configure", type='secondary')
+
     if configure:
+        system_configs = {
+            "generator": feature_gen,
+            "selector": feature_sel,
+            "scaler_type": scaler,
+            "estimator": estimator,
+            "degree": degree,
+            "P_primer": P_primer,
+            "process_noise": process_noise,
+            "use_bev": use_bev
+        }
+        
+        if feature_gen == "edge":
+            system_configs.update({"ksize": ksize})
+        else:
+            system_configs.update({"small_ksize": small_ksize, "large_ksize": large_ksize})
+        
+        if feature_sel == "direct":
+            system_configs.update({"n_std": n_std})
+        else:
+            system_configs.update({"min_votes": min_votes, "min_length": min_length, "max_gap": max_gap})
+        
+        if estimator == "RANSAC":
+            system_configs.update({"confidence": confidence, "min_inliers": min_inliers, "max_error": max_error})
 
-        processor_configs = {
-                "in_range": {
-                    "lower_bounds": lower_bounds, 
-                    "upper_bounds": upper_bounds
-                },
-                "canny": {
-                    "canny_low": canny_low, 
-                    "canny_high": canny_high, 
-                    "blur_first": blur_first
-                },
-                "hough": {
-                    "rho": rho, 
-                    "theta": np.pi / theta, 
-                    "thresh": min_votes, 
-                    "min_length": min_line_length, 
-                    "max_gap": max_line_gap
-                },
-                "composite": {
-            
-                    "stroke": True if stroke_bool else False, 
-                    "stroke_color": stroke_color if stroke_bool else "#FFFFFF",
-                    "fill": True if fill_bool else False,
-                    "fill_color": fill_color if fill_bool else "#FFFFFF"
-                }
-            }
-        st.session_state["processor_configs"] = processor_configs
-        with st.spinner("Configuring processor..."):
+        if use_bev:
+            system_configs.update({"forward_range": forward_range, "lateral_range": lateral_range, "resolution": resolution})
+
+        st.session_state["configs"] = system_configs
+        with st.spinner("Configuring system..."):
             try:
-                with requests.post(f"{BACKEND_URL}/configure", json=processor_configs) as r:
+                with requests.post(f"{BACKEND_URL}/configure", json=system_configs) as r:
                     r.raise_for_status()
 
             except requests.exceptions.RequestException as e:
                 st.error(f"Error connecting to processing service: {str(e)}.")
                 st.warning(f"Make sure backend service is running at {BACKEND_URL}.")
 
-    view_options = ['Step-by-Step', 'Composite Only']
+    view_options = ['inset', 'mosaic', "composite"]
     st.divider()
-    st.header("Step 2: Inspect & Evaluate")
+    st.header("Step 2: Run & Evaluate")
     cols2 = st.columns(2, border=True)
     with cols2[0]:
         cols2A = st.columns(2)
@@ -269,7 +279,7 @@ if st.session_state['file'] is not None:
             view_selection = st.segmented_control("Render Options", view_options)
         cols2B = st.columns(2)
         with cols2B[0]:
-            run = st.button("Process Video")
+            run = st.button("Run Detection")
         with cols2B[1]:
             stop = st.button("Stop", type='primary')
         if run and not view_selection:
@@ -296,7 +306,7 @@ if st.session_state['file'] is not None:
 
     with cols2[1]:
         st.subheader("Evaluation Report")
-        
+    
 
     if release:
         st.session_state['reset'] = not st.session_state['reset']
