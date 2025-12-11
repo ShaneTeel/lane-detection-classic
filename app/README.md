@@ -4,7 +4,7 @@ Interactive demo for the [lane-detection-classic](../README.md) project
 
 ## Try it Live
 
-[Launch Demo](url)
+[Launch Demo](https://lane-detection-classic-v1.streamlit.app/)
 
 ## Table-of-Contents
 - [Key Features](#key-features)
