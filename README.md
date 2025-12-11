@@ -80,14 +80,15 @@ Read through the app's [README.md](./app/README.md) for a description and guided
 git clone https://github.com/ShaneTeel/lane-detection-classic.git
 cd lane-detection-classic
 ```
-If installing for app + package
-```bash
-pip install -r requirements.txt
-```
-If installing for package only
+If installing to use package
 ```bash
 pip install -e .
 ```
+If installing to run app
+```bash
+pip install -r requirements.txt
+```
+
 ### Run Demo Scripts
 **Straight Lane Video**
 ```
