@@ -168,6 +168,7 @@ class SingleLaneLineDetector():
     def generate_evaluation_prediction(self):
         X, y = self.get_fitted()
         if X.size == 0 or y.size == 0:
+            print("here")
             return np.array([]).reshape(-1, 2), np.array([]).reshape(-1, 2)
         y_pred_scaled = self.estimator.poly_val(self.coeffs, X)
         X_true, y_true = self.scaler.inverse_transform(X, y)

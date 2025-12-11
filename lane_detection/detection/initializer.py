@@ -23,13 +23,14 @@ class Initializer():
 
     def initialize_studio(self, source:Union[str, int, StudioManager]):
         if isinstance(source, StudioManager):
+            self.fps, _, _ = source.get_metadata()
             return source
         studio = StudioManager(source)
         self.fps, _, _ = studio.get_metadata()
         return studio
     
-    def initialize_geometry(self, roi:NDArray):
-        masker = ROIMasker(roi)
+    def initialize_geometry(self, roi:NDArray | ROIMasker):
+        masker = roi if type(roi) is ROIMasker else ROIMasker(roi)
         if not self.configs.use_bev:
             return masker, None
         src_pts = masker.get_src_pts()
@@ -78,6 +79,7 @@ class Initializer():
         config_obj = CONFIG_MAP["bev"](**kwargs)
         final.update(config_obj.model_dump())
 
+
         FinalConfigs = create_model(
             "FinalConfigs", **{k: (type(v), v) for k, v in final.items()},
         )
@@ -90,10 +92,10 @@ class BEVConfigs(BaseModel):
     resolution:float = Field(default=0.03, ge=0.01)
 
 class EdgeMapConfigs(BaseModel):
-    ksize:Literal[3, 5, 7, 9, 11, 13, 15] = 3
+    ksize:Literal[3, 5, 7, 9, 11, 13, 15] = 5
 
 class ThreshMapConfigs(BaseModel):
-    small_ksize:Literal[3, 5, 7, 9, 11, 13, 15] = 3
+    small_ksize:Literal[3, 5, 7, 9, 11, 13, 15] = 5
     large_ksize:Literal[11, 13, 15, 17, 19, 21] = 15
 
 class HoughConfigs(BaseModel):

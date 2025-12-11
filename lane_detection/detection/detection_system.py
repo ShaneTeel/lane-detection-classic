@@ -9,6 +9,7 @@ from typing import Literal, Union
 # Package-internal module
 from .initializer import Initializer
 from lane_detection.studio import StudioManager
+from lane_detection.image_geometry import ROIMasker
 from .single_lane_line_detector import SingleLaneLineDetector
 from lane_detection.evaluation import RegressionEvaluator
 from lane_detection.utils import get_logger
@@ -48,7 +49,7 @@ class DetectionSystem():
     _UNDERLINE = "\033[4m"
     _END = "\033[0m"
 
-    def __init__(self, source:Union[str, int, StudioManager], roi:NDArray, generator:Literal["edge", "thresh"], selector:Literal["direct", "hough"], estimator:Literal["ols", "ransac"], **kwargs):        
+    def __init__(self, source:Union[str, int, StudioManager], roi:Union[NDArray, ROIMasker], generator:Literal["edge", "thresh"], selector:Literal["direct", "hough"], estimator:Literal["ols", "ransac"], **kwargs):        
         '''
         Parameters
         ----------
@@ -68,7 +69,6 @@ class DetectionSystem():
         logger.debug("Initializing detection system")
 
         self.initializer = Initializer(generator, selector, estimator, **kwargs)
-        
         self.studio = self.initializer.initialize_studio(source)        
         self.mask, self.bev = self.initializer.initialize_geometry(roi)
         self.generator = self.initializer.initialize_generator()
@@ -90,7 +90,7 @@ class DetectionSystem():
         view_style : {"original", "masked", "diptych"}, default="diptych"
             Preview display mode
         """
-        frame_names = self._configure_output(view_style, False, method="preview")
+        frame_names = self._configure_output(view_style, False, method="preview", print_controls=True)
         while True and not self.exit:
             ret, frame = self.studio.return_frame()
             if not ret:
@@ -128,7 +128,7 @@ class DetectionSystem():
         When using BEV projection, comparison occurs in camera space after inverse transform.
         """
         
-        frame_names = self._configure_output(view_style, file_out_name, method="final")
+        frame_names = self._configure_output(view_style, file_out_name, method="final", print_controls=True)
 
         while True and not self.exit:
             ret, frame = self.studio.return_frame()
@@ -145,12 +145,16 @@ class DetectionSystem():
                 
                 lane_lines = []
                 for i in range(2):
-                    detector = self.detector1 if i == 0 else self.detector2
-                    evaluator = self.evaluator1 if i == 0 else self.evaluator2
-                    if lane_pts[i].size == 0:
-                        continue
-
                     pts = lane_pts[i]
+                    if pts.size == 0:
+                        continue
+                    
+                    if i == 0:
+                        detector = self.detector1
+                        evaluator = self.evaluator1
+                    else:
+                        detector = self.detector2
+                        evaluator = self.evaluator2
 
                     line = self.detect_line(pts, detector)
                     lane_lines.append(np.flipud(line)) if i == 0 else lane_lines.append(line)
@@ -194,9 +198,9 @@ class DetectionSystem():
         met2 = self.evaluator2.return_metrics()[score_type.upper()]
         return met1, met2
     
-    def _configure_output(self, view_style:str=None, file_out_name:str=None, method:Literal["preview", "final"]="final"):
+    def _configure_output(self, view_style:str=None, file_out_name:str=None, method:Literal["preview", "final"]="final", print_controls:bool = True):
         if view_style is not None:      
-            if self.studio.source_type() != "image":
+            if self.studio.source_type() != "image" and print_controls:
                 self.studio.print_menu()
             if file_out_name is not None:
                 self.studio.create_writer(file_out_name)

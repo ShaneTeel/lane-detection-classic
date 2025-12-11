@@ -93,8 +93,10 @@ class ROIMasker():
                 raise ValueError(e)
 
         points = roi[0]
-        bottom = points[points[:, 1] > points[:, 1].mean()]
-        top = points[points[:, 1] <= points[:, 1].mean()]
+        
+        avg_y = points[:, 1].mean()
+        bottom = points[points[:, 1] > avg_y]
+        top = points[points[:, 1] <= avg_y]
 
         bottom_left, bottom_right = bottom[np.argsort(bottom[:, 0])]
         top_left, top_right = top[np.argsort(top[:, 0])]
