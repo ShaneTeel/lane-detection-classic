@@ -1,5 +1,4 @@
-import io
-import base64
+
 from lane_detection.studio import StudioManager
 from lane_detection.image_geometry import ROIMasker
 from lane_detection.detection import DetectionSystem
@@ -87,10 +86,3 @@ def stop_video():
         raise HTTPException(status_code=500, detail=error)
     
 
-# Gen file download link (app-specific)
-def get_download_link(file, file_name, text):
-    buffered = io.BytesIO()
-    file.save(buffered, format='mp4')
-    file_str = base64.b64encode(buffered.getvalue()).decode()
-    href = f"<a href='data:file/txt;base64,{file_str}' download='{file_name}'>{text}</a>"
-    return href

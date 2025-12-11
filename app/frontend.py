@@ -1,10 +1,18 @@
+# Display / Image operations
 import cv2
-import numpy as np
-import streamlit as st
-import tempfile
-from streamlit_image_coordinates import streamlit_image_coordinates as img_xy
 from PIL import Image, ImageDraw
+import numpy as np
 
+# App design
+import streamlit as st
+from streamlit_image_coordinates import streamlit_image_coordinates as img_xy
+
+# Read / Write
+import tempfile
+import io
+import base64
+
+# Required lane detection modules
 from lane_detection.detection import DetectionSystem
 from lane_detection.image_geometry import ROIMasker
 from lane_detection.studio import StudioManager
@@ -13,12 +21,27 @@ st.set_page_config(layout="wide")
 
 # Helper Funcs
 def add_point():
+    '''
+    Takes a user mouse click over an image
+    and returns an (x, y) tuple added to a session state list
+    '''
     if len(st.session_state['click_points']) == 4:
         return
     else:
         raw = st.session_state['point']
         point = raw['x'], raw['y']
         st.session_state['click_points'].append(point)
+
+
+def get_download_link(file, file_name, text):
+    '''
+    Generates a download link for a user to save a video
+    '''
+    buffered = io.BytesIO()
+    file.save(buffered, format='mp4')
+    file_str = base64.b64encode(buffered.getvalue()).decode()
+    href = f"<a href='data:file/txt;base64,{file_str}' download='{file_name}'>{text}</a>"
+    return href
 
 # Destructor Attributes
 if 'reset' not in st.session_state:

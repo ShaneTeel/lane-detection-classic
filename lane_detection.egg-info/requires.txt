@@ -1,7 +1,12 @@
-numpy==2.3.5
+numpy==2.9
 opencv_contrib_python==4.12.0.88
 Pillow==12.0.0
 pydantic==2.12.5
 setuptools==72.1.0
 streamlit==1.50.0
 streamlit_image_coordinates==0.4.0
+
+[dev]
+pytest>=7.0.0
+black>=22.0.0
+flake8>=4.0.0
