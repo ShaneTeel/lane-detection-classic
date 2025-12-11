@@ -66,6 +66,8 @@ if 'click_points' not in st.session_state:
     st.session_state['click_points'] = []
 if 'poly_img' not in st.session_state:
     st.session_state['poly_img'] = None
+if 'roi' not in st.session_state:
+    st.session_state['roi'] = None
 
 # Set title
 st.title("Classic Lane-Line Detection Demo")
@@ -196,14 +198,14 @@ if st.session_state['file'] is not None:
 
     viewer_cols = st.columns([2, 3])
     with viewer_cols[0]:
-        st.markdown("##### ROI Options")
+        st.markdown("##### Viewer Options")
         reset = st.button("Reset", type='primary')
     with viewer_cols[1]:
-        st.markdown("##### View Options")
+        st.markdown("#####")
         view_options = ['inset', 'mosaic', "composite"]
         run_cols = st.columns(2)
         with run_cols[0]:
-            view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed")
+            view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
 
     # Create ROI Window
     if st.session_state['roi_window'] is None:
@@ -222,29 +224,76 @@ if st.session_state['file'] is not None:
 
             if len(st.session_state["click_points"]) > 0:
                 for pt in st.session_state["click_points"]:
-                    draw.ellipse([pt[0]-5, pt[1]-5, pt[0]+5, pt[1]+5], (255, 255, 0))
+                    draw.ellipse([pt[0]-5, pt[1]-5, pt[0]+5, pt[1]+5], (255, 0, 0))
 
             if len(st.session_state["click_points"]) == 4:
                 points = np.array(st.session_state["click_points"]).reshape(-1, 4, 2)
+                st.session_state["roi"] = points
                 mask = ROIMasker(points)
                 poly_lst = mask.src_pts.tolist()
                 poly = [(x, y) for point in poly_lst for x, y in point]
-                draw.polygon(poly, outline=(255, 255, 0), width=5)
+                draw.polygon(poly, outline=(255, 0, 0), width=5)
 
             value = img_xy(img_draw, key='point', on_click=add_point, cursor='crosshair')
 
             if reset:
                 st.session_state['click_points'].clear()
+                st.session_state["roi"] = None
                 st.session_state['poly_img'] = st.session_state['roi_frame'].copy()
                 st.rerun()
 
         except Exception as e:
             st.error(f"Error preparing image coordinates: {str(e)}")
 
+        if run:
+            if st.session_state["roi"] is None:
+                st.error("Error, user must select ROI before running detection.")
+            try:
+                system = DetectionSystem(st.session_state["file"], st.session_state["roi"], **st.session_state["configs"])
+                frame_names = system._configure_output(view_selection, None, method="final")
+                st.session_state['roi_window'].empty()
+                st.session_state["click_points"].clear()
+                while True:
+                    ret, frame = system.studio.return_frame()
+                    if not ret:
+                        break
+                    else:
+                        thresh, feature_map = system.generator.generate(frame)
+                        masked = system.mask.inverse_mask(feature_map)
+                        lane_pts = system.selector.select(masked)
+                        lane_lines = []
+                        for i in range(2):
+                            pts = lane_pts[i]
+                            if pts.size == 0:
+                                continue
+                            
+                            if i == 0:
+                                detector = system.detector1
+                                evaluator = system.evaluator1
+                            else:
+                                detector = system.detector2
+                                evaluator = system.evaluator2
+
+                            line = system.detect_line(pts, detector)
+                            lane_lines.append(np.flipud(line)) if i == 0 else lane_lines.append(line)
+                            system.evaluate_model(detector, evaluator)
+                            
+                        frame_lst = [frame, thresh, feature_map, masked]
+                        final = system.studio.gen_view(frame_lst, frame_names, lane_lines, view_selection)
+                        final = cv2.cvtColor(final, cv2.COLOR_BGR2RGB)
+                        st.session_state["roi_window"].image(final)
+
+            except Exception as e:
+                st.error(f"Error running detection: {e}")
+        
     if release:
         st.session_state['reset'] = not st.session_state['reset']
         st.session_state['file'] = None
+        st.session_state["uploaded_file"] = None
+        st.session_state["roi_window"] = None
+        st.session_state['points'] = None
         st.session_state["poly_img"] = None
+        st.session_state["roi"] = None
         st.session_state["click_points"].clear()
         if studio:
             studio.clean._clean_up()
