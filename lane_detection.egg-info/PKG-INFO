@@ -13,11 +13,11 @@ Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Requires-Python: ==3.11.13
 Description-Content-Type: text/markdown
-Requires-Dist: numpy==2.9
-Requires-Dist: opencv_contrib_python==4.12.0.88
-Requires-Dist: Pillow==12.0.0
+Requires-Dist: numpy>=2.2.6
+Requires-Dist: opencv-python>=4.10.0
+Requires-Dist: setuptools==80.9.0
+Requires-Dist: Pillow<12.0.0,>=7.1.0
 Requires-Dist: pydantic==2.12.5
-Requires-Dist: setuptools==72.1.0
 Requires-Dist: streamlit==1.50.0
 Requires-Dist: streamlit_image_coordinates==0.4.0
 Provides-Extra: dev
