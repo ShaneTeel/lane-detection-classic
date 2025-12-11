@@ -4,6 +4,7 @@ A classical approach to lane line detection featuring:
 - Manual Kalman-filtering
 - RANSAC/OLS Polynomial Regression
 - Homography-calculation and projection
+- Streamlit app for demonstration
 
 ## Table-of-Contents
 - [Demo / Examples](#demo--examples)
@@ -36,6 +37,10 @@ Regression
 ```
 
 See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu.be/AOmAQo3oTFU)
+
+**Streamlit App** --> [Lane-Line Detection Demo](streamlit.url)
+
+See the app's [README.md](./app/README.md) for a description and guided walk-through.
 
 [Return to TOC](#table-of-contents)
 
@@ -126,17 +131,18 @@ lane_detection/
 ```mermaid
 ---
 title: Lane Line Detection Stages
+id: eb8afec7-e8d6-443b-9df4-357dccd01d6c
 ---
-graph LR;
+flowchart LR;
     A([Read Image / Video]) --> B;
     subgraph Feature Generation;
-        B[HSL-Masking] --> CA;
+        B[HSL-Masking] --> |Generator A| CA;
         CA["Threshold + Morphology<br>(Close --> Dilate)"] --> D;
-        B[HSL-Masking] --> CB;
+        B[HSL-Masking] --> |Generator B| CB;
         CB["Vertical Edge Detection<br>(Sobel-X)"] --> D
         end
-    D[Inverse ROI-Masking] --> EA;
-    D[Inverse ROI-Masking] --> EB;
+    D[Inverse ROI-Masking] --> |Extractor A| EA;
+    D[Inverse ROI-Masking] --> |Extractor B| EB;
     subgraph Feature Transformation;
         EA[Probabilistic Hough Lines Transform] --> F;
         EB[Direct Pixel-Wise Extraction] --> F;
@@ -144,8 +150,8 @@ graph LR;
         F{BEV?} --> |No| H;
         G[Perspective Transform] --> H;
         end
-    H[Feature Scaling] --> IA;
-    H[Feature Scaling] --> IB
+    H[Feature Scaling] --> |Estimator A| IA;
+    H[Feature Scaling] --> |Estimator B| IB
     subgraph Dynamic Linear Modeling
         IA["Outlier-Rejection Curve Fitting<br>(RANSAC)"] --> J;
         IB["Outlier-Sensitive Curve Fitting<br>(OLS)"] --> J;
@@ -225,7 +231,6 @@ This project demonstrates **fundamental understanding** of classical computer vi
 [Return to TOC](#table-of-contents)
 
 ## To-Do
-- Finish Streamlit app for demo [coming soon!]
 - Add unit tests for critical modules (e.g., Kalman, RANSAC, OLS, BEV/Homography).
 
 [Return to TOC](#table-of-contents)

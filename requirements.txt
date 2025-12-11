@@ -1,7 +1,10 @@
+# Core dependencies
 opencv-python>=4.10.0
 numpy>=2.2.6
 setuptools==80.9.0
 pydantic==2.12.5
+
+# Streamlit dependencies
 Pillow<12.0.0,>=7.1.0
 streamlit==1.50.0
 streamlit_image_coordinates==0.4.0

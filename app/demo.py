@@ -9,15 +9,41 @@ from streamlit_image_coordinates import streamlit_image_coordinates as img_xy
 
 # Read / Write
 import tempfile
-import io
-import base64
 
 # Required lane detection modules
 from lane_detection.detection import DetectionSystem
 from lane_detection.image_geometry import ROIMasker
 from lane_detection.studio import StudioManager
 
-st.set_page_config(layout="wide")
+# Destructor Attributes
+if 'reset' not in st.session_state:
+    st.session_state['reset'] = True
+if 'container_lst' not in st.session_state:
+    st.session_state['container_lst'] = []
+
+# Source Attributes
+if 'file' not in st.session_state:
+    st.session_state['file'] = None
+if "uploaded_file" not in st.session_state:
+    st.session_state["uploaded_file"] = None
+if "studio" not in st.session_state:
+    st.session_state["studio"] = None
+
+# ROI Attributes
+if 'view_window' not in st.session_state:
+    st.session_state['view_window'] = None
+if 'roi_frame' not in st.session_state:
+    st.session_state['roi_frame'] = None
+if 'point' not in st.session_state:
+    st.session_state['points'] = None
+if 'click_points' not in st.session_state:
+    st.session_state['click_points'] = []
+if 'poly_img' not in st.session_state:
+    st.session_state['poly_img'] = None
+if 'roi' not in st.session_state:
+    st.session_state['roi'] = None
+
+st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
 # Helper Funcs
 def add_point():
@@ -32,45 +58,8 @@ def add_point():
         point = raw['x'], raw['y']
         st.session_state['click_points'].append(point)
 
-
-def get_download_link(file, file_name, text):
-    '''
-    Generates a download link for a user to save a video
-    '''
-    buffered = io.BytesIO()
-    file.save(buffered, format='mp4')
-    file_str = base64.b64encode(buffered.getvalue()).decode()
-    href = f"<a href='data:file/txt;base64,{file_str}' download='{file_name}'>{text}</a>"
-    return href
-
-# Destructor Attributes
-if 'reset' not in st.session_state:
-    st.session_state['reset'] = True
-if 'container_lst' not in st.session_state:
-    st.session_state['container_lst'] = []
-
-# Source Attributes
-if 'file' not in st.session_state:
-    st.session_state['file'] = None
-if "uploaded_file" not in st.session_state:
-    st.session_state["uploaded_file"] = None
-
-# ROI Attributes
-if 'roi_window' not in st.session_state:
-    st.session_state['roi_window'] = None
-if 'roi_frame' not in st.session_state:
-    st.session_state['roi_frame'] = None
-if 'point' not in st.session_state:
-    st.session_state['points'] = None
-if 'click_points' not in st.session_state:
-    st.session_state['click_points'] = []
-if 'poly_img' not in st.session_state:
-    st.session_state['poly_img'] = None
-if 'roi' not in st.session_state:
-    st.session_state['roi'] = None
-
 # Set title
-st.title("Classic Lane-Line Detection Demo")
+st.title("Lane-Line Detection Demo")
 
 # Create file upload button
 st.header("Source Management")
@@ -94,6 +83,7 @@ if uploaded_file is not None and uploaded_file != st.session_state["uploaded_fil
             temp.write(uploaded_file.read())
             st.session_state["file"] = temp.name
         studio = StudioManager(st.session_state["file"])
+        st.session_state["studio"] = studio
         ret, frame = studio.return_frame()
         st.session_state["roi_frame"] = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     except Exception as e:
@@ -102,11 +92,11 @@ if uploaded_file is not None and uploaded_file != st.session_state["uploaded_fil
 with st.sidebar:
     run = st.button("Run Detection", type="secondary")
     st.title("System Configuration")
-    st.subheader("Feature Generation")
+    st.subheader("Feature Engineering")
 
     # Feature Generation Input
-    st.markdown("#### Feature Generation")
-    feature_gen = st.radio("Select Feature Generator", ["edge", "thresh"], horizontal=True, index=0)
+    st.markdown("#### Generation")
+    feature_gen = st.radio("Select a method for generating a feature map", ["edge", "thresh"], horizontal=True, index=0)
     if feature_gen == "edge":
         ksize = st.select_slider("Blur & Canny Kernel Size", [3, 5, 7, 9, 11, 13, 15], value=5)
     else:
@@ -116,9 +106,9 @@ with st.sidebar:
         with thresh_cols[1]:
             large_ksize = st.select_slider("Dilate Kernel Size", [11, 13, 15, 17, 19, 21], value=15)
 
-    # Feature Selection Input
-    st.markdown("#### Feature Selection")
-    feature_sel = st.radio("Select Feature Extractor", ["hough", "direct"], horizontal=True, index=1)
+    # Feature Extraction Input
+    st.markdown("#### Extraction")
+    feature_sel = st.radio("Select a method for feature map extraction", ["hough", "direct"], horizontal=True, index=1)
     if feature_sel == "hough":
         hough_cols = st.columns(3)
         h, w = st.session_state["roi_frame"].size if st.session_state["roi_frame"] is not None else 0
@@ -182,14 +172,12 @@ with st.sidebar:
         system_configs.update({"n_std": n_std})
     else:
         system_configs.update({"min_votes": min_votes, "min_length": min_length, "max_gap": max_gap})
-    if estimator == "RANSAC":
+    if estimator == "ransac":
         system_configs.update({"confidence": confidence, "min_inliers": min_inliers, "max_error": max_error})
     if use_bev:
         system_configs.update({"forward_range": forward_range, "lateral_range": lateral_range, "resolution": resolution})
 
     st.session_state["configs"] = system_configs
-
-st.set_page_config(initial_sidebar_state="expanded")
 
 if st.session_state['file'] is not None:
     st.subheader("Media Viewer")
@@ -206,11 +194,12 @@ if st.session_state['file'] is not None:
         run_cols = st.columns(2)
         with run_cols[0]:
             view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
+    
 
-    # Create ROI Window
-    if st.session_state['roi_window'] is None:
-        st.session_state['roi_window'] = st.empty()
-        st.session_state['container_lst'].append(st.session_state['roi_window'])
+    # Create Viewing Window
+    if st.session_state['view_window'] is None:
+        st.session_state['view_window'] = st.empty()
+        st.session_state['container_lst'].append(st.session_state['view_window'])
     
     # Create writeable ROI Frame
     if st.session_state.get("roi_frame") is not None:
@@ -245,58 +234,69 @@ if st.session_state['file'] is not None:
         except Exception as e:
             st.error(f"Error preparing image coordinates: {str(e)}")
 
-        if run:
-            if st.session_state["roi"] is None:
-                st.error("Error, user must select ROI before running detection.")
-            try:
-                system = DetectionSystem(st.session_state["file"], st.session_state["roi"], **st.session_state["configs"])
-                frame_names = system._configure_output(view_selection, None, method="final")
-                st.session_state['roi_window'].empty()
-                st.session_state["click_points"].clear()
-                while True:
-                    ret, frame = system.studio.return_frame()
-                    if not ret:
-                        break
+if run:
+    if st.session_state["roi"] is None:
+        st.error("Error, user must select ROI before running detection.")
+    else:
+        st.session_state["view_window"].empty()
+        st.session_state["click_points"].clear()
+        progress_bar = st.progress(0, text="Video processing in progress...")
+    try:
+        system = DetectionSystem(st.session_state["file"], st.session_state["roi"], **st.session_state["configs"])
+        frame_names = system._configure_output(view_selection, file_out_name=None, method="final", print_controls=False)
+        total_frames = int(system.studio.source.frame_count)
+        frames_processed = 0
+        while True:
+            ret, frame = system.studio.return_frame()
+            if not ret:
+                break
+            else:
+                thresh, feature_map = system.generator.generate(frame)
+                masked = system.mask.inverse_mask(feature_map)
+                lane_pts = system.selector.select(masked)
+                lane_lines = []
+                for i in range(2):
+                    pts = lane_pts[i]
+                    if pts.size == 0:
+                        continue
+                    
+                    if i == 0:
+                        detector = system.detector1
+                        evaluator = system.evaluator1
                     else:
-                        thresh, feature_map = system.generator.generate(frame)
-                        masked = system.mask.inverse_mask(feature_map)
-                        lane_pts = system.selector.select(masked)
-                        lane_lines = []
-                        for i in range(2):
-                            pts = lane_pts[i]
-                            if pts.size == 0:
-                                continue
-                            
-                            if i == 0:
-                                detector = system.detector1
-                                evaluator = system.evaluator1
-                            else:
-                                detector = system.detector2
-                                evaluator = system.evaluator2
+                        detector = system.detector2
+                        evaluator = system.evaluator2
 
-                            line = system.detect_line(pts, detector)
-                            lane_lines.append(np.flipud(line)) if i == 0 else lane_lines.append(line)
-                            system.evaluate_model(detector, evaluator)
-                            
-                        frame_lst = [frame, thresh, feature_map, masked]
-                        final = system.studio.gen_view(frame_lst, frame_names, lane_lines, view_selection)
-                        final = cv2.cvtColor(final, cv2.COLOR_BGR2RGB)
-                        st.session_state["roi_window"].image(final)
+                    line = system.detect_line(pts, detector)
+                    if i == 0:
+                        lane_lines.append(np.flipud(line))
+                    else:
+                        lane_lines.append(line)
+                    system.evaluate_model(detector, evaluator)
+                    
+                frame_lst = [frame, thresh, feature_map, masked]
+                final = system.studio.gen_view(frame_lst, frame_names, lane_lines, view_selection)
+                final = cv2.cvtColor(final, cv2.COLOR_BGR2RGB)
+                st.session_state["view_window"].image(final)
 
-            except Exception as e:
-                st.error(f"Error running detection: {e}")
+                frames_processed += 1
+                percent_complete = int((frames_processed / total_frames * 100))
+                progress_bar.progress(percent_complete, text=f"Processing frame {frames_processed} of {total_frames}.")
+
+    except Exception as e:
+        st.error(f"Error running detection: {e}")
         
     if release:
         st.session_state['reset'] = not st.session_state['reset']
         st.session_state['file'] = None
         st.session_state["uploaded_file"] = None
-        st.session_state["roi_window"] = None
+        st.session_state["view_window"] = None
         st.session_state['points'] = None
         st.session_state["poly_img"] = None
         st.session_state["roi"] = None
         st.session_state["click_points"].clear()
-        if studio:
-            studio.clean._clean_up()
+        if st.session_state["studio"] is not None:
+            st.session_state["studio"].clean._clean_up()
         for container in st.session_state['container_lst']:
             container.empty()
         st.rerun()
