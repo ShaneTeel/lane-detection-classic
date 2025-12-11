@@ -145,12 +145,16 @@ class DetectionSystem():
                 
                 lane_lines = []
                 for i in range(2):
-                    detector = self.detector1 if i == 0 else self.detector2
-                    evaluator = self.evaluator1 if i == 0 else self.evaluator2
-                    if lane_pts[i].size == 0:
-                        continue
-
                     pts = lane_pts[i]
+                    if pts.size == 0:
+                        continue
+                    
+                    if i == 0:
+                        detector = self.detector1
+                        evaluator = self.evaluator1
+                    else:
+                        detector = self.detector2
+                        evaluator = self.evaluator2
 
                     line = self.detect_line(pts, detector)
                     lane_lines.append(np.flipud(line)) if i == 0 else lane_lines.append(line)

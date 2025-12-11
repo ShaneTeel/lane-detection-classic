@@ -1,5 +1,7 @@
 README.md
-setup.py
+pyproject.toml
+app/backend.py
+app/frontend.py
 lane_detection/__init__.py
 lane_detection.egg-info/PKG-INFO
 lane_detection.egg-info/SOURCES.txt
@@ -41,3 +43,8 @@ lane_detection/studio/write.py
 lane_detection/utils/__init__.py
 lane_detection/utils/constants.py
 lane_detection/utils/logger.py
+scripts/grid_search_demo.py
+scripts/curved/curved_edge_direct_demo.py
+scripts/curved/curved_thresh_direct_demo.py
+scripts/straight/straight_edge_direct_demo.py
+scripts/straight/straight_thresh_direct_demo.py

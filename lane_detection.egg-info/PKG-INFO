@@ -2,37 +2,22 @@ Metadata-Version: 2.4
 Name: lane_detection
 Version: 0.1.0
 Summary: Classic lane line detection system using traditional CV models and Kalman filtering
-Home-page: https://github.com/ShaneTeel/lane-detection-classic
 Author: Shane Teel
+License: MIT
+Project-URL: Homepage, https://github.com/ShaneTeel/lane-detection-classic
 Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.8
 Classifier: Programming Language :: Python :: 3.9
 Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
-Classifier: License :: OSI Approved :: MIT License
+Classifier: License :: OSI Approved :: MIT Licence
 Classifier: Operating System :: OS Independent
-Requires-Python: ==3.11.13
+Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 Requires-Dist: numpy>=2.2.6
 Requires-Dist: opencv-python>=4.10.0
 Requires-Dist: setuptools==80.9.0
-Requires-Dist: Pillow<12.0.0,>=7.1.0
 Requires-Dist: pydantic==2.12.5
-Requires-Dist: streamlit==1.50.0
-Requires-Dist: streamlit_image_coordinates==0.4.0
-Provides-Extra: dev
-Requires-Dist: pytest>=7.0.0; extra == "dev"
-Requires-Dist: black>=22.0.0; extra == "dev"
-Requires-Dist: flake8>=4.0.0; extra == "dev"
-Dynamic: author
-Dynamic: classifier
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: home-page
-Dynamic: provides-extra
-Dynamic: requires-dist
-Dynamic: requires-python
-Dynamic: summary
 
 # Lane Detection
 
