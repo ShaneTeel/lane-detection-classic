@@ -18,6 +18,9 @@ from lane_detection.studio import StudioManager
 # Wrapper for Detection System processing
 from single_frame_processor import SingleFrameProcessor
 
+# Constant (Used for frame display rate)
+FRAMES_PER_UPDATE = 30
+
 # Destructor Attributes
 if 'reset' not in st.session_state:
     st.session_state['reset'] = True
@@ -46,8 +49,17 @@ if 'poly_img' not in st.session_state:
 if 'roi' not in st.session_state:
     st.session_state['roi'] = None
 
+# Detection Run Attributes
+if "run" not in st.session_state:
+    st.session_state["run"] = False
 if "processing" not in st.session_state:
     st.session_state["processing"] = False
+if "current_frame" not in st.session_state:
+    st.session_state["current_frame"] = None
+if "processor" not in st.session_state:
+    st.session_state["processor"] = None
+if "frame_index" not in st.session_state:
+    st.session_state["frame_index"] = 0
 
 st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
@@ -244,36 +256,44 @@ if st.session_state['file'] is not None:
         if st.session_state["roi"] is None:
             st.error("Error, user must select ROI before running detection.")
         else:
-            st.session_state["processing"] = True
-            st.session_state["roi_window"] = st.empty()
+            st.session_state["run"] = True
             st.session_state["click_points"].clear()
-            progress_bar = st.progress(0, text="Video processing in progress...")
+    if st.session_state["run"]:
         try:
-            processor = SingleFrameProcessor(
-                st.session_state["file"],
-                st.session_state["roi"],
-                st.session_state["configs"],
-                view_selection
-            )
+            progress_bar = st.progress(0, text="Video processing in progress...")
+            if st.session_state["processor"] is None:
+                st.session_state["processor"] = SingleFrameProcessor(
+                    st.session_state["file"],
+                    st.session_state["roi"],
+                    st.session_state["configs"],
+                    view_selection
+                )
+
             total_frames = st.session_state["studio"].source.frame_count
-            frames_processed = 0
-            while True:
-                
+            processor = st.session_state["processor"]
+
+            for _ in range(FRAMES_PER_UPDATE):
                 ret, frame = processor.system.studio.return_frame()
                 if not ret:
-                    st.session_state["processing"] = False
+                    st.session_state["run"] = False
+                    del st.session_state["processor"]
+                    del st.session_state["frame_index"]
                     break
-                else:
-                    final = processor.process_frame(frame)
+
+                final = processor.process_frame(frame)
+                st.session_state["current_frame"] = final
+                st.session_state["frame_index"] += 1
+
+                if st.session_state["current_frame"] is not None:
                     with st.session_state["view_window"]:
                         st.image(final, channels="BGR")
 
-                    time.sleep(0.01)
-                    frames_processed += 1
-                    percent_complete = int((frames_processed / total_frames * 100))
-                    progress_bar.progress(percent_complete, text=f"Processed {frames_processed}/{total_frames} ({percent_complete}%).")
-            
-            st.session_state["processing"] = False
+                percent_complete = int((st.session_state["frame_index"] / total_frames * 100))
+                progress_bar.progress(percent_complete, text=f"Processed {st.session_state['frame_index']}/{total_frames} ({percent_complete}%).")
+        
+            if st.session_state["run"]:
+                st.rerun()
+
         except Exception as e:
             st.error(f"Error running detection: {e}")
         
@@ -290,4 +310,10 @@ if st.session_state['file'] is not None:
             st.session_state["studio"].clean._clean_up()
         for container in st.session_state['container_lst']:
             container.empty()
+        
+        st.session_state["processing"] = False
+        st.session_state["fame_index"] = 0
+        st.session_state["processor"].studio.source.clean._clean_up()
+        st.session_state["processor"] = None
+        st.session_state["current_frame"] = None
         st.rerun()
