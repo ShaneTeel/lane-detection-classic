@@ -40,7 +40,7 @@ See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu
 
 **Streamlit App** 
 
-See it live here --> [Lane-Line Detection Demo](streamlit.url)
+See it live here --> [Lane-Line Detection Demo](https://lane-detection-classic-v1.streamlit.app/)
 
 Read through the app's [README.md](./app/README.md) for a description and guided walk-through.
 
