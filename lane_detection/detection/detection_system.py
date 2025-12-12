@@ -202,7 +202,7 @@ class DetectionSystem():
         if view_style is not None:      
             if self.studio.source_type() != "image" and print_controls:
                 self.studio.print_menu()
-            if file_out_name is not None:
+            if type(file_out_name) == str:
                 self.studio.create_writer(file_out_name)
             return self.studio.get_frame_names(view_style.lower(), method)
 
