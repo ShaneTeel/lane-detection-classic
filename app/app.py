@@ -2,6 +2,7 @@
 import cv2
 from PIL import Image, ImageDraw
 import numpy as np
+import time
 
 # App design
 import streamlit as st
@@ -11,9 +12,11 @@ from streamlit_image_coordinates import streamlit_image_coordinates as img_xy
 import tempfile
 
 # Required lane detection modules
-from lane_detection.detection import DetectionSystem
 from lane_detection.image_geometry import ROIMasker
 from lane_detection.studio import StudioManager
+
+# Wrapper for Detection System processing
+from single_frame_processor import SingleFrameProcessor
 
 # Destructor Attributes
 if 'reset' not in st.session_state:
@@ -42,6 +45,9 @@ if 'poly_img' not in st.session_state:
     st.session_state['poly_img'] = None
 if 'roi' not in st.session_state:
     st.session_state['roi'] = None
+
+if "processing" not in st.session_state:
+    st.session_state["processing"] = False
 
 st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
@@ -121,7 +127,7 @@ with st.sidebar:
         with hough_cols[2]:
             max_gap = st.number_input("Max. Line Gap", min_value=0, max_value=int(diag), value=20)
     else:
-        n_std = st.number_input("Number of Standard Deviations to Filter", min_value=0.5, max_value=10.0, value=2.0)
+        n_std = st.number_input("Number of Standard Deviations to Filter", min_value=0.5, max_value=10.0, value=6.0)
 
     # Modeling Configs
     st.markdown("#### Dynamic Linear Modeling")
@@ -131,7 +137,7 @@ with st.sidebar:
     if use_bev:
         bev_cols = st.columns(3)
         with bev_cols[0]:
-            forward_range = st.number_input("Forward", min_value=0.0, max_value=100.0, value=40.0)
+            forward_range = st.number_input("Forward", min_value=0.0, max_value=100.0, value=20.0)
         with bev_cols[1]:
             lateral_range = st.number_input("Lateral", min_value=0.0, max_value=100.0, value=7.0)
         with bev_cols[2]:
@@ -151,7 +157,7 @@ with st.sidebar:
 
     st.markdown("##### Kalman Options")
     P_primer = st.number_input("Initial Confidence", min_value=0.0, max_value=0.99, value=0.5)
-    process_noise = st.radio("Process Noise (Environment)", ["low", "medium", "high"], horizontal=True)
+    process_noise = st.radio("Process Noise (Environment)", ["low", "medium", "high"], horizontal=True, index=1)
 
     system_configs = {
         "generator": feature_gen,
@@ -207,7 +213,7 @@ if st.session_state['file'] is not None:
             if st.session_state['poly_img'] is None:
                 poly_img = st.session_state.get("roi_frame")
                 st.session_state['poly_img'] = poly_img.copy()
-            
+            # with st.session_state["view_window"]:
             img_draw = st.session_state.get("poly_img")
             draw = ImageDraw.Draw(img_draw)
 
@@ -234,57 +240,42 @@ if st.session_state['file'] is not None:
         except Exception as e:
             st.error(f"Error preparing image coordinates: {str(e)}")
 
-if run:
-    if st.session_state["roi"] is None:
-        st.error("Error, user must select ROI before running detection.")
-    else:
-        st.session_state["view_window"].empty()
-        st.session_state["click_points"].clear()
-        progress_bar = st.progress(0, text="Video processing in progress...")
-    try:
-        system = DetectionSystem(st.session_state["file"], st.session_state["roi"], **st.session_state["configs"])
-        frame_names = system._configure_output(view_selection, file_out_name=None, method="final", print_controls=False)
-        total_frames = int(system.studio.source.frame_count)
-        frames_processed = 0
-        while True:
-            ret, frame = system.studio.return_frame()
-            if not ret:
-                break
-            else:
-                thresh, feature_map = system.generator.generate(frame)
-                masked = system.mask.inverse_mask(feature_map)
-                lane_pts = system.selector.select(masked)
-                lane_lines = []
-                for i in range(2):
-                    pts = lane_pts[i]
-                    if pts.size == 0:
-                        continue
-                    
-                    if i == 0:
-                        detector = system.detector1
-                        evaluator = system.evaluator1
-                    else:
-                        detector = system.detector2
-                        evaluator = system.evaluator2
+    if run:
+        if st.session_state["roi"] is None:
+            st.error("Error, user must select ROI before running detection.")
+        else:
+            st.session_state["processing"] = True
+            st.session_state["roi_window"] = st.empty()
+            st.session_state["click_points"].clear()
+            progress_bar = st.progress(0, text="Video processing in progress...")
+        try:
+            processor = SingleFrameProcessor(
+                st.session_state["file"],
+                st.session_state["roi"],
+                st.session_state["configs"],
+                view_selection
+            )
+            total_frames = st.session_state["studio"].source.frame_count
+            frames_processed = 0
+            while True:
+                
+                ret, frame = processor.system.studio.return_frame()
+                if not ret:
+                    st.session_state["processing"] = False
+                    break
+                else:
+                    final = processor.process_frame(frame)
+                    with st.session_state["view_window"]:
+                        st.image(final, channels="BGR")
 
-                    line = system.detect_line(pts, detector)
-                    if i == 0:
-                        lane_lines.append(np.flipud(line))
-                    else:
-                        lane_lines.append(line)
-                    system.evaluate_model(detector, evaluator)
-                    
-                frame_lst = [frame, thresh, feature_map, masked]
-                final = system.studio.gen_view(frame_lst, frame_names, lane_lines, view_selection)
-                final = cv2.cvtColor(final, cv2.COLOR_BGR2RGB)
-                st.session_state["view_window"].image(final)
-
-                frames_processed += 1
-                percent_complete = int((frames_processed / total_frames * 100))
-                progress_bar.progress(percent_complete, text=f"Processing frame {frames_processed} of {total_frames}.")
-
-    except Exception as e:
-        st.error(f"Error running detection: {e}")
+                    time.sleep(0.01)
+                    frames_processed += 1
+                    percent_complete = int((frames_processed / total_frames * 100))
+                    progress_bar.progress(percent_complete, text=f"Processed {frames_processed}/{total_frames} ({percent_complete}%).")
+            
+            st.session_state["processing"] = False
+        except Exception as e:
+            st.error(f"Error running detection: {e}")
         
     if release:
         st.session_state['reset'] = not st.session_state['reset']

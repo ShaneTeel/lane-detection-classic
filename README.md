@@ -50,15 +50,14 @@ Interactive demo for the [lane-detection-classic](../README.md) project
 
 ## Local Setup
 - Python 3.10+
-- `lane_detection` package installed (see instructions [here](../README.md))
 
 ### App Installation Instructions
 **All commands below start from the repositories root directory**
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
-streamlit run ./app/demo.py
+streamlit run app.py
 ```
 
 ## Troubleshooting
