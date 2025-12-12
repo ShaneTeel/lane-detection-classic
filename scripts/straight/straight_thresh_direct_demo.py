@@ -5,6 +5,7 @@ from lane_detection.detection import DetectionSystem
 from lane_detection.utils import setup_logging, get_logger
 
 setup_logging(log_level=logging.WARNING,
+              log_dir="./logs",
               log_to_file=True,
               console_output=True)
 
