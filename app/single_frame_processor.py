@@ -50,3 +50,4 @@ class SingleFrameProcessor:
     
     def write_frame(self, frame:np.ndarray):
         self.system.studio.write_frames(frame)
+

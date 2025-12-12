@@ -90,7 +90,7 @@ if uploaded_file is not None and uploaded_file != st.session_state["uploaded_fil
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_in:
             temp_in.write(uploaded_file.read())
             st.session_state["file_in"] = temp_in.name
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_out:
+        with tempfile.NamedTemporaryFile(delete=False) as temp_out:
             file_out_name = temp_out.name
             st.session_state["file_out"] = file_out_name
         studio = StudioManager(st.session_state["file_in"])
@@ -268,6 +268,7 @@ if st.session_state['file_in'] is not None:
                 ret, frame = processor.return_frame()
                 if not ret:
                     st.session_state["processed"] = True
+                    processor.system.studio.write.writer.release()
                     progress_bar.progress(100, text="Processing Complete! Select 'Play' to view results.")
                     break
 
@@ -285,7 +286,7 @@ if st.session_state['file_in'] is not None:
         if not st.session_state["processed"]:
             st.error("Cannot play until video is finished processing")
         with st.session_state["view_window"]:
-            st.video(st.session_state["file_out"])
+            st.video(st.session_state["file_out"] + ".mp4")
 
     if release:
         st.session_state['reset'] = not st.session_state['reset']
