@@ -87,8 +87,8 @@ class StudioManager():
             return 1, self.source.height, self.source.width
         return self.source.fps, self.source.height, self.source.width
     
-    def create_writer(self, file_out_name:str):
-        self.write._initialize_writer(file_out_name)
+    def create_writer(self, file_out_name:str, fourcc:str):
+        self.write._initialize_writer(file_out_name, fourcc)
 
     def write_frames(self, frame:NDArray):
         if self.write.writer:

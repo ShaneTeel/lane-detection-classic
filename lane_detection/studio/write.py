@@ -12,7 +12,7 @@ class Writer():
     def save_object(self, frame):
         self.writer.write(frame)
 
-    def _initialize_writer(self, file_out_name):
+    def _initialize_writer(self, file_out_name, fourcc:str):
         file_out_name += self.ext
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        fourcc = cv2.VideoWriter_fourcc(*fourcc)
         self.writer = cv2.VideoWriter(file_out_name, fourcc, self.fps, (self.width, self.height))
