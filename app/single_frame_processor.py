@@ -11,7 +11,7 @@ class SingleFrameProcessor:
         self.frame_names = self.system._configure_output(
             view_style=view_style, 
             file_out_name=file_out_name,
-            fourcc="H264",
+            fourcc="XVID",
             method="final",
             print_controls=False
         )

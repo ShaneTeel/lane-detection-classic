@@ -1,6 +1,6 @@
 # Lane-Line Detection Demo App
 
-Interactive demo for the [lane-detection-classic](../README.md) project
+Interactive demo for the [Classic Lane Line Detection](https://github.com/ShaneTeel/lane-detection-classic/tree/main) project
 
 ## Try it Live
 
