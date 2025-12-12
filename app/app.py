@@ -90,9 +90,6 @@ if uploaded_file is not None and uploaded_file != st.session_state["uploaded_fil
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_in:
             temp_in.write(uploaded_file.read())
             st.session_state["file_in"] = temp_in.name
-        with tempfile.NamedTemporaryFile(delete=False) as temp_out:
-            file_out_name = temp_out.name
-            st.session_state["file_out"] = file_out_name
         studio = StudioManager(st.session_state["file_in"])
         st.session_state["studio"] = studio
         ret, frame = studio.return_frame()
@@ -134,9 +131,7 @@ with st.sidebar:
     else:
         n_std = st.number_input("Number of Standard Deviations to Filter", min_value=0.5, max_value=10.0, value=6.0)
 
-    # Modeling Configs
-    st.markdown("#### Dynamic Linear Modeling")
-    st.markdown("##### Transformation Options")
+    st.markdown("#### Transformation")
     scaler = st.radio("Select Scaler", ["min_max", "z_score"], horizontal=True, index=1)
     use_bev = st.radio("Use BEV?", [True, False], horizontal=True, index=0)
     if use_bev:
@@ -148,7 +143,9 @@ with st.sidebar:
         with bev_cols[2]:
             resolution = st.number_input("GSD", min_value=0.01, max_value=1.0, value=0.03)
 
-    st.markdown("##### Estimator Options")
+    # Modeling Configs
+    st.subheader("Dynamic Linear Modeling")
+    st.markdown("#### Estimator Options")
     estimator = st.radio(label="Select Estimator", options=["ols", "ransac"], horizontal=True, index=0)
     degree = st.radio("Select Degree", [1, 2, 3], horizontal=True, index=1)
     if estimator == "ransac":
@@ -160,7 +157,7 @@ with st.sidebar:
         with ransac_cols[2]:
             max_error = st.number_input("Max Error", min_value=0, value=10)
 
-    st.markdown("##### Kalman Options")
+    st.markdown("#### Kalman Options")
     P_primer = st.number_input("Initial Confidence", min_value=0.0, max_value=0.99, value=0.5)
     process_noise = st.radio("Process Noise (Environment)", ["low", "medium", "high"], horizontal=True, index=1)
 
@@ -254,12 +251,15 @@ if st.session_state['file_in'] is not None:
         st.session_state["run"] = True
         st.session_state["click_points"].clear()
         try:
+            with tempfile.NamedTemporaryFile(delete=False) as temp_out:
+                file_out_name = temp_out.name
+                st.session_state["file_out"] = file_out_name + ".mp4"
             progress_bar = st.progress(0, text="Video processing in progress...")
             processor = SingleFrameProcessor(
                     st.session_state["file_in"],
                     st.session_state["roi"],
                     st.session_state["configs"],
-                    st.session_state["file_out"],
+                    file_out_name,
                     view_selection
                 )
             total_frames = st.session_state["studio"].source.frame_count
@@ -268,7 +268,9 @@ if st.session_state['file_in'] is not None:
                 ret, frame = processor.return_frame()
                 if not ret:
                     st.session_state["processed"] = True
-                    processor.system.studio.write.writer.release()
+                    processor.system.studio.clean._clean_up()
+                    import time
+                    time.sleep(0.5)
                     progress_bar.progress(100, text="Processing Complete! Select 'Play' to view results.")
                     break
 
@@ -286,7 +288,7 @@ if st.session_state['file_in'] is not None:
         if not st.session_state["processed"]:
             st.error("Cannot play until video is finished processing")
         with st.session_state["view_window"]:
-            st.video(st.session_state["file_out"] + ".mp4")
+            st.video(st.session_state["file_out"])
 
     if release:
         st.session_state['reset'] = not st.session_state['reset']

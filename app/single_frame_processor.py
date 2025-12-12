@@ -10,7 +10,8 @@ class SingleFrameProcessor:
         self.view_style=view_style
         self.frame_names = self.system._configure_output(
             view_style=view_style, 
-            file_out_name=file_out_name, 
+            file_out_name=file_out_name,
+            file_out_fourcc="H264"
             method="final",
             print_controls=False
         )
