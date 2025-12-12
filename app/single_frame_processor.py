@@ -4,17 +4,20 @@ from lane_detection.detection import DetectionSystem
 
 class SingleFrameProcessor:
 
-    def __init__(self, file_path:str, roi:np.ndarray, configs:dict, view_style:str):
+    def __init__(self, file_path:str, roi:np.ndarray, configs:dict, file_out_name:str, view_style:str):
         self.file_path = file_path
         self.system = DetectionSystem(file_path, roi, **configs)
         self.view_style=view_style
         self.frame_names = self.system._configure_output(
             view_style=view_style, 
-            file_out_name=None, 
+            file_out_name=file_out_name, 
             method="final",
             print_controls=False
         )
     
+    def return_frame(self):
+        return self.system.studio.return_frame()
+
     def process_frame(self, frame:np.ndarray):
         thresh, feature_map = self.system.generator.generate(frame)
         masked = self.system.mask.inverse_mask(feature_map)
@@ -44,3 +47,6 @@ class SingleFrameProcessor:
         frame_lst = [frame, thresh, feature_map, masked]
         final = self.system.studio.gen_view(frame_lst, self.frame_names, lane_lines, self.view_style)
         return final
+    
+    def write_frame(self, frame:np.ndarray):
+        self.system.studio.write_frames(frame)
