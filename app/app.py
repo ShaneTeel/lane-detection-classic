@@ -305,6 +305,4 @@ if st.session_state['file_in'] is not None:
             st.session_state["studio"].clean._clean_up()
         for container in st.session_state['container_lst']:
             container.empty()
-        os.remove(temp_in)
-        os.remove(temp_out)
         st.rerun()
