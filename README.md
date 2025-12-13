@@ -4,7 +4,6 @@ A classical approach to lane line detection featuring:
 - Manual Kalman-filtering
 - RANSAC/OLS Polynomial Regression
 - Homography-calculation and projection
-- Streamlit app for demonstration
 
 ## Table-of-Contents
 - [Demo / Examples](#demo--examples)
