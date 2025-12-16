@@ -22,7 +22,7 @@ def demo_video(src:str, roi:np.ndarray, **kwargs):
         **kwargs
     )
 
-    eval = system.run("inset", stroke=False, fill=True)
+    eval = system.run("inset", stroke=False, fill=True, file_out_name=None)
 
     print(eval)
     

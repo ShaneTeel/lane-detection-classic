@@ -90,9 +90,9 @@ class StudioManager():
     def create_writer(self, file_out_name:str, fourcc:str):
         self.write._initialize_writer(file_out_name, fourcc)
 
-    def write_frames(self, frame:NDArray):
-        if self.write.writer:
-            self.write.save_object(frame)
+    def write_frame(self, frame:NDArray):
+        if self.write.writer is not None:
+            self.write.write_frame(frame)
         else:
             raise RuntimeError("ERROR: Never created writer object")
         

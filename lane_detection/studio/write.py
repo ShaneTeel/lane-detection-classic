@@ -9,7 +9,7 @@ class Writer():
         self.fps = source.fps
         self.writer = None
     
-    def save_object(self, frame):
+    def write_frame(self, frame):
         self.writer.write(frame)
 
     def _initialize_writer(self, file_out_name, fourcc:str):

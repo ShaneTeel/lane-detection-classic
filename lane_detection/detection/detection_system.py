@@ -213,7 +213,7 @@ class DetectionSystem():
         if self.studio.control_playback():
             self.exit = True
         if self.studio.writer_check():
-            self.studio.write_frames(final)
+            self.studio.write_frame(final)
 
     def get_default_configs(self):
         return dict(self.initializer.configs)
