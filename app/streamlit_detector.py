@@ -2,15 +2,16 @@ import numpy as np
 
 from lane_detection.detection import DetectionSystem
 from lane_detection.utils import get_logger
+from streamlit_writer import StreamlitWriter
 
 logger = get_logger(__name__)
 
 class StreamlitDetector():
 
-    def __init__(self, file_path:str, roi:np.ndarray, configs:dict, view_style:str):
+    def __init__(self, file_path:str, roi:np.ndarray, configs:dict, file_out_name, view_style:str):
 
         # System configs
-        self.system = DetectionSystem(file_path, roi, **configs)
+        self.system = DetectionSystem(file_path, roi, file_out_name, **configs)
         self.view_style = view_style
         self.frame_names = self.system._configure_output(
             view_style=view_style, 
@@ -19,6 +20,7 @@ class StreamlitDetector():
             method="final",
             print_controls=False
         )
+        self.writer = StreamlitWriter(file_out_name, self.system.studio.source.fps)
 
         logger.debug("Initialized Detector")
 
@@ -57,4 +59,4 @@ class StreamlitDetector():
         return self.system.studio.return_frame()
     
     def write_frame(self, frame):
-        self.system.studio.write_frames(frame)
+        self.writer.write_frame(frame)

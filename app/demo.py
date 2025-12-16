@@ -6,19 +6,16 @@ import numpy as np
 # App design
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates as img_xy
-from streamlit_webrtc import webrtc_streamer, WebRtcMode
 
 # Read / Write
 import tempfile
-import queue
-import time
 
 # Required lane detection modules
 from lane_detection.image_geometry import ROIMasker
 from lane_detection.studio import StudioManager
 
 # Streamlit specific Detection System wrapper
-from rt_video_processor import RTVideoProcessor
+from streamlit_detector import StreamlitDetector
 
 # Destructor Attributes
 if 'reset' not in st.session_state:
@@ -55,8 +52,8 @@ if "run" not in st.session_state:
     st.session_state["run"] = False
 if "processor" not in st.session_state:
     st.session_state["processor"] = None
-if "frame_data" not in st.session_state:
-    st.session_state["frame_data"] = None
+if "processed" not in st.session_state:
+    st.session_state["processed"] = False
 
 st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
@@ -214,14 +211,15 @@ if st.session_state['file_in'] is not None and not release:
     with viewer_cols[1]:
         st.markdown("#####")
         view_options = ['inset', 'mosaic', "composite"]
-        run_cols = st.columns(2)
+        run_cols = st.columns(3)
         with run_cols[0]:
             view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
         with run_cols[1]:
             run = st.button("Run Detection", type="secondary")
             if run:
                 st.session_state["run"] = True
-    
+        with run_cols[2]:
+            play = st.button("Play", type="secondary")    
 
     # Create Viewing Window
     if st.session_state['view_window'] is None:
@@ -263,39 +261,35 @@ if st.session_state["run"]:
     src = st.session_state["file_in"]
     roi = st.session_state["roi"]
     kwargs = st.session_state["configs"]
-    if st.session_state["processor"] is None:
-        st.session_state["processor"] = RTVideoProcessor(src, roi, kwargs, view_selection)
-        st.session_state["view_window"] = st.session_state["view_window"].empty()
-    
-    if st.session_state["processor"] is not None:
-        processor = st.session_state["processor"]
-    try:
-        frame_data = processor.recv()
-        st.session_state["frame_data"] = frame_data
-        with st.session_state["view_window"].container():
-            st.image(frame_data, channels="BGR")
-        # webrtc_streamer(
-        #     key="RTVideoProcessor-v1",
-        #     video_processor_factory=lambda: RTVideoProcessor(src, roi, kwargs, view_selection),
-        #     mode=WebRtcMode.RECVONLY,
-        #     media_stream_constraints={"video": True, "audio": False},
-        #     rtc_configuration={"iceServers": []}, 
-        #     async_processing=True,
-        #     video_html_attrs={
-        #         "style": {"width": "100%"},
-        #         "controls": True,
-        #         "autoPlay": True,
-        #     }
-        # )
-        time.sleep(0.01)
-        st.rerun()
-    except queue.Empty:
-        if st.session_state["frame_data"] is not None:
-            st.success("Processing complete!")
-        else:
-            st.info("Processing frame...")
-        st.session_state["run"] = False
 
+    if st.session_state["file_out"] is None:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_out:
+            temp_out.write(uploaded_file.read())
+            st.session_state["file_out"] = temp_out.name
+
+    file_out_name = st.session_state["file_out"]
+    detector = StreamlitDetector(file_path=src, roi=roi, file_out_name=file_out_name, view_style=view_selection, configs=kwargs)
+    progress_bar = st.progress(0, text="Video processing in progress...")
+
+    total_frames = st.session_state["studio"].source.frame_count
+    frame_idx = 0
+    while True:
+        ret, frame = detector.return_frame()
+        if not ret:
+            st.session_state["run"] = False
+            st.session_state["processed"] = True
+            detector.system.studio.clean._clean_up()
+            import time
+            time.sleep(0.5)
+            progress_bar.progress(100, text="Processing Complete! Select 'Play' to view results.")
+            break
+
+        final = detector.process_frame(frame)
+        detector.write_frame(final)
+        frame_idx += 1
+
+        percent_complete = int((frame_idx / total_frames * 100))
+        progress_bar.progress(percent_complete, text=f"Processed {frame_idx}/{total_frames} ({percent_complete}%).")
 
     if play:
         if not st.session_state["processed"]:
