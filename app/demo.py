@@ -106,9 +106,6 @@ if uploaded_file is not None:
             st.error(f"Error reading file: {str(e)}")
 
 with st.sidebar:
-    run = st.button("Run Detection", type="secondary")
-    if run:
-        st.session_state["run"] = True
     st.title("System Configuration")
     st.subheader("Feature Engineering")
 
@@ -221,7 +218,9 @@ if st.session_state['file_in'] is not None and not release:
         with run_cols[0]:
             view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
         with run_cols[1]:
-            play = st.button("Play", type="secondary")
+            run = st.button("Run Detection", type="secondary")
+            if run:
+                st.session_state["run"] = True
     
 
     # Create Viewing Window
@@ -266,6 +265,7 @@ if st.session_state["run"]:
     kwargs = st.session_state["configs"]
     if st.session_state["processor"] is None:
         st.session_state["processor"] = RTVideoProcessor(src, roi, kwargs, view_selection)
+        st.session_state["view_window"] = st.session_state["view_window"].empty()
     
     if st.session_state["processor"] is not None:
         processor = st.session_state["processor"]
