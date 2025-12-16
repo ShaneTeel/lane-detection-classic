@@ -87,7 +87,7 @@ st.divider()
 if uploaded_file is not None and uploaded_file != st.session_state["uploaded_file"]:
     st.spinner("Reading file...")
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.avi') as temp_in:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_in:
             temp_in.write(uploaded_file.read())
             st.session_state["file_in"] = temp_in.name
         studio = StudioManager(st.session_state["file_in"])
@@ -253,7 +253,7 @@ if st.session_state['file_in'] is not None:
         try:
             with tempfile.NamedTemporaryFile(delete=False) as temp_out:
                 file_out_name = temp_out.name
-                st.session_state["file_out"] = file_out_name + ".avi"
+                st.session_state["file_out"] = file_out_name + ".mp4"
             progress_bar = st.progress(0, text="Video processing in progress...")
             processor = SingleFrameProcessor(
                     st.session_state["file_in"],

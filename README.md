@@ -57,7 +57,7 @@ Interactive demo for the [Classic Lane Line Detection](https://github.com/ShaneT
 ```bash
 python -m pip install -r requirements.txt
 
-streamlit run app.py
+streamlit run ./app/demo.py
 ```
 
 ## Troubleshooting
