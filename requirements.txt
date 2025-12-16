@@ -8,8 +8,7 @@ pydantic==2.12.5
 Pillow<12.0.0,>=7.1.0
 streamlit==1.50.0
 streamlit_image_coordinates==0.4.0
-streamlit_webrtc==0.64.5
-av==16.0.1
+imageio[ffmpeg]==2.37.2
 
 # Lane Detection Package
 git+https://github.com/ShaneTeel/lane-detection-classic.git@main#egg=lane_detection

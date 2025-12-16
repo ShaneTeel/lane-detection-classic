@@ -1,24 +1,11 @@
-import numpy as np
 
-from lane_detection.detection import DetectionSystem
-from lane_detection.utils import get_logger
 
 logger = get_logger(__name__)
 
-class SingleFrameProcessor():
+class StreamlitWriter():
 
     def __init__(self, file_path:str, roi:np.ndarray, configs:dict, view_style:str):
 
-        # System configs
-        self.system = DetectionSystem(file_path, roi, **configs)
-        self.view_style = view_style
-        self.frame_names = self.system._configure_output(
-            view_style=view_style, 
-            file_out_name=None,
-            fourcc=None,
-            method="final",
-            print_controls=False
-        )
 
         logger.debug("Initialized Processor")
 
