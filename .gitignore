@@ -1,4 +1,4 @@
 logs/
 __pycache__/
 *.pyc
-lane_detection.egg-info/
+**/*.egg-info/
