@@ -79,7 +79,7 @@ For more details on using the app, see the app branch's [README.md](https://gith
 git clone https://github.com/ShaneTeel/lane-detection-classic.git
 cd lane-detection-classic
 
-pip install -e .
+python -m pip install -e .
 ```
 
 ### Run Demo Scripts
