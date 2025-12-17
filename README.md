@@ -39,7 +39,9 @@ Regression
 See full video here: [Curved Road Lane Line Detection w/ Edge Map](https://youtu.be/AOmAQo3oTFU)
 
 ### Streamlit App
-[Launch App]()
+[Launch Demo](https://classic-lane-line-detection.streamlit.app)
+
+For more details on using the app, see the app branch's [README.md](https://github.com/ShaneTeel/lane-detection-classic/tree/app)
 
 [Return to TOC](#table-of-contents)
 
