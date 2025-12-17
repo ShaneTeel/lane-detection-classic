@@ -217,9 +217,9 @@ if st.session_state['file_in'] is not None and not release:
     with viewer_cols[1]:
         view_options = ['inset', 'mosaic', "composite"]
         view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
-
+        
     with viewer_cols[2]:
-        if st.session_state["click_points"] == 4:
+        if st.session_state["roi"] is not None:
             run = st.button("Run Detection", type="secondary")
             if run:
                 st.session_state["run"] = True
@@ -260,6 +260,8 @@ if st.session_state['file_in'] is not None and not release:
                 poly_lst = mask.src_pts.tolist()
                 poly = [(x, y) for point in poly_lst for x, y in point]
                 draw.polygon(poly, outline=(255, 0, 0), width=5)
+                st.session_state["click_points"].clear()
+                st.rerun()
 
             value = img_xy(img_draw, key='point', on_click=add_point, cursor='crosshair')
 
@@ -267,7 +269,6 @@ if st.session_state['file_in'] is not None and not release:
             st.error(f"Error preparing image coordinates: {str(e)}")
             
 if st.session_state["run"]:
-    st.session_state["click_points"].clear()
     src = st.session_state["file_in"]
     roi = st.session_state["roi"]
     kwargs = st.session_state["configs"]
