@@ -172,9 +172,9 @@ with st.sidebar:
     # Styling Configs
     st.subheader("Rendering Style")
     st.markdown("#### Slect a video rendering option")
-    st.caption("Render options only affects the frame design, not the lane line detection.")
     view_options = ['inset', 'mosaic', "composite"]
-    view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
+    view_selection = st.radio("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
+    st.caption("Render options only affects the frame design, not the lane line detection.")
 
     system_configs = {
         "generator": feature_gen,
@@ -208,7 +208,7 @@ if st.session_state['file_in'] is not None and not release:
     st.write(" ")
 
     st.markdown("##### Viewer Options")
-    viewer_cols = st.columns(3)
+    viewer_cols = st.columns(3, vertical_alignment="center")
     with viewer_cols[0]:
         reset = st.button("Reset", type='secondary')
         if reset:
