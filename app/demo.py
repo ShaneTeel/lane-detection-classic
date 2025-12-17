@@ -172,7 +172,7 @@ with st.sidebar:
     # Styling Configs
     st.subheader("Rendering Style")
     st.markdown("#### Slect a video rendering option")
-    view_selection = st.radio("Render Options", ['inset', 'mosaic', "composite"], horizontal=True, index=2)
+    view_selection = st.radio("Render Options", ['inset', 'mosaic', "composite"], label_visibility="collapsed", horizontal=True, index=2)
     st.caption("Render options only affects the frame design, not the lane line detection.")
 
     system_configs = {
