@@ -264,38 +264,39 @@ if st.session_state['file_in'] is not None and not release:
 if st.session_state["run"]:
     if st.session_state["roi"] is None:
         st.error("Error, user must select ROI before running detection.")
-    st.session_state["click_points"].clear()
-    src = st.session_state["file_in"]
-    roi = st.session_state["roi"]
-    kwargs = st.session_state["configs"]
+    else:
+        st.session_state["click_points"].clear()
+        src = st.session_state["file_in"]
+        roi = st.session_state["roi"]
+        kwargs = st.session_state["configs"]
 
-    if st.session_state["file_out"] is None:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_out:
-            st.session_state["file_out"] = temp_out.name
+        if st.session_state["file_out"] is None:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_out:
+                st.session_state["file_out"] = temp_out.name
 
-    detector = StreamlitDetector(file_path=src, roi=roi, file_out_name=st.session_state["file_out"], view_style=view_selection, configs=kwargs)
-    progress_bar = st.progress(0, text="Video processing in progress...")
+        detector = StreamlitDetector(file_path=src, roi=roi, file_out_name=st.session_state["file_out"], view_style=view_selection, configs=kwargs)
+        progress_bar = st.progress(0, text="Video processing in progress...")
 
-    total_frames = st.session_state["studio"].source.frame_count
-    frame_idx = 0
-    while True:
-        ret, frame = detector.return_frame()
-        if not ret:
-            st.session_state["run"] = False
-            st.session_state["processed"] = True
-            detector.system.studio.clean._clean_up()
-            detector.writer.release()
-            time.sleep(0.5)
-            progress_bar.progress(100, text="Processing Complete! Select 'Play' to view results.")
-            break
+        total_frames = st.session_state["studio"].source.frame_count
+        frame_idx = 0
+        while True:
+            ret, frame = detector.return_frame()
+            if not ret:
+                st.session_state["run"] = False
+                st.session_state["processed"] = True
+                detector.system.studio.clean._clean_up()
+                detector.writer.release()
+                time.sleep(0.5)
+                progress_bar.progress(100, text="Processing Complete! Select 'Play' to view results.")
+                break
 
-        final = detector.process_frame(frame)
-        detector.write_frame(final)
-        frame_idx += 1
+            final = detector.process_frame(frame)
+            detector.write_frame(final)
+            frame_idx += 1
 
-        percent_complete = int((frame_idx / total_frames * 100))
-        progress_bar.progress(percent_complete, text=f"Processed {frame_idx}/{total_frames} ({percent_complete}%).")
-    st.rerun()
+            percent_complete = int((frame_idx / total_frames * 100))
+            progress_bar.progress(percent_complete, text=f"Processed {frame_idx}/{total_frames} ({percent_complete}%).")
+        st.rerun()
 
 if st.session_state["play"]:
     with st.session_state["view_window"]:
