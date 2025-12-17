@@ -203,7 +203,7 @@ if st.session_state['file_in'] is not None and not release:
     st.markdown("##### Viewer Options")
     viewer_cols = st.columns(4)
     with viewer_cols[0]:
-        reset = st.button("Reset", type='primary')
+        reset = st.button("Reset", type='secondary')
         if reset:
             st.session_state['run'] = False
             st.session_state["roi"] = None
@@ -219,7 +219,7 @@ if st.session_state['file_in'] is not None and not release:
         view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
     with viewer_cols[2]:
         if st.session_state["roi"] is not None:
-            run = st.button("Run Detection", type="secondary")
+            run = st.button("Run Detection", type="tertiary")
             if run:
                 st.session_state["run"] = True
         else:
