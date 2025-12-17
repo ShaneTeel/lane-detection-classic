@@ -114,7 +114,7 @@ with st.sidebar:
     st.markdown("#### Generation")
     feature_gen = st.radio("Select a method for generating a feature map", ["edge", "thresh"], horizontal=True, index=0)
     if feature_gen == "edge":
-        ksize = st.select_slider("Blur & Canny Kernel Size", [3, 5, 7, 9, 11, 13, 15], value=5)
+        ksize = st.select_slider("Blur & Sobel-X Kernel Size", [3, 5, 7, 9, 11, 13, 15], value=5)
     else:
         thresh_cols = st.columns(2)
         with thresh_cols[0]:
