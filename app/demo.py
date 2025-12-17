@@ -210,6 +210,8 @@ if st.session_state['file_in'] is not None and not release:
             st.session_state['click_points'].clear()
             st.session_state['poly_img'] = st.session_state['roi_frame'].copy()
             st.session_state['processor'] = None
+            st.session_state["processed"] = False
+            st.session_state["play"] = False
             st.rerun()
 
     with viewer_cols[1]:
