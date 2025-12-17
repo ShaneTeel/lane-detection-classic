@@ -173,7 +173,7 @@ with st.sidebar:
     st.subheader("Rendering Style")
     st.markdown("#### Slect a video rendering option")
     view_selection = st.radio("Render Options", ['inset', 'mosaic', "composite"], label_visibility="collapsed", horizontal=True, index=2)
-    st.caption("Render options only affects the frame design, not the lane line detection.")
+    st.caption("Render options only affect the final frame design, not the algorithm applied to detect lane lines.")
 
     system_configs = {
         "generator": feature_gen,
