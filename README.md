@@ -4,7 +4,7 @@ Interactive demo for the [Classic Lane Line Detection](https://github.com/ShaneT
 
 ## Try it Live
 
-[Launch Demo](https://lane-detection-classic-v1.streamlit.app/)
+[Launch Demo](https://classic-lane-line-detection.streamlit.app)
 
 ## Table-of-Contents
 - [Key Features](#key-features)
@@ -17,7 +17,6 @@ Interactive demo for the [Classic Lane Line Detection](https://github.com/ShaneT
 - **Interactive ROI selection** - Used to define a region of interest within which to apply the detection
 - **Configurable pipeline** - Adjust paramers for feature generation, selection, and modeling
 - **Multiple View Styles** - Choose from three viewing options that allow users to inspect the results of their configuration at each stage of the pipeline
-- **Real-Time Visualization** - Allows for immediate inspection of results
 
 ## Guided Walk-Through
 
