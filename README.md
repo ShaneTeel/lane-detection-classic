@@ -27,6 +27,7 @@ Interactive demo for the [Classic Lane Line Detection](https://github.com/ShaneT
 2. **Select ROI** - Move cursor over image and click 4 points to define a region of interest
 3. **Configure System** - Adjust paramters in sidebar
 4. **Run Detection** - Click `Run Detection` to process video
+5. **Play Video** - Click `Play` to play processed video
 
 ## Configuration Options
 
