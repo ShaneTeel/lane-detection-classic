@@ -11,7 +11,7 @@ class StreamlitDetector():
     def __init__(self, file_path:str, roi:np.ndarray, configs:dict, file_out_name, view_style:str):
 
         # System configs
-        self.system = DetectionSystem(file_path, roi, file_out_name, **configs)
+        self.system = DetectionSystem(file_path, roi, **configs)
         self.view_style = view_style
         self.frame_names = self.system._configure_output(
             view_style=view_style, 

@@ -2,6 +2,7 @@
 import cv2
 from PIL import Image, ImageDraw
 import numpy as np
+import time
 
 # App design
 import streamlit as st
@@ -54,6 +55,8 @@ if "processor" not in st.session_state:
     st.session_state["processor"] = None
 if "processed" not in st.session_state:
     st.session_state["processed"] = False
+if "play" not in st.session_state:
+    st.session_state["play"] = False
 
 st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
@@ -95,6 +98,7 @@ if uploaded_file is not None:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_in:
                 temp_in.write(uploaded_file.read())
                 st.session_state["file_in"] = temp_in.name
+                temp_in.close()
             studio = StudioManager(st.session_state["file_in"])
             st.session_state["studio"] = studio
             ret, frame = studio.return_frame()
@@ -168,8 +172,8 @@ with st.sidebar:
     system_configs = {
         "generator": feature_gen,
         "selector": feature_sel,
-        "scaler_type": scaler,
         "estimator": estimator,
+        "scaler_type": scaler,
         "degree": degree,
         "P_primer": P_primer,
         "process_noise": process_noise,
@@ -196,9 +200,9 @@ if st.session_state['file_in'] is not None and not release:
     st.markdown("**Move cursor over image and right-click at four different points on the image.**")
     st.write(" ")
 
-    viewer_cols = st.columns([1, 3])
+    st.markdown("##### Viewer Options")
+    viewer_cols = st.columns(4)
     with viewer_cols[0]:
-        st.markdown("##### Viewer Options")
         reset = st.button("Reset", type='primary')
         if reset:
             st.session_state['run'] = False
@@ -209,17 +213,19 @@ if st.session_state['file_in'] is not None and not release:
             st.rerun()
 
     with viewer_cols[1]:
-        st.markdown("#####")
         view_options = ['inset', 'mosaic', "composite"]
-        run_cols = st.columns(3)
-        with run_cols[0]:
-            view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
-        with run_cols[1]:
-            run = st.button("Run Detection", type="secondary")
-            if run:
-                st.session_state["run"] = True
-        with run_cols[2]:
-            play = st.button("Play", type="secondary")    
+        view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
+    with viewer_cols[2]:
+        run = st.button("Run Detection", type="secondary")
+        if run:
+            st.session_state["run"] = True
+    with viewer_cols[3]:
+        if st.session_state["processed"]:
+            play = st.button("Play", type="secondary")
+            if play:
+                st.session_state["play"] = True
+        else:
+            play = st.button("Play", type="secondary", disabled=True, help="Process video first.")
 
     # Create Viewing Window
     if st.session_state['view_window'] is None:
@@ -232,7 +238,7 @@ if st.session_state['file_in'] is not None and not release:
             if st.session_state['poly_img'] is None:
                 poly_img = st.session_state.get("roi_frame")
                 st.session_state['poly_img'] = poly_img.copy()
-            # with st.session_state["view_window"]:
+
             img_draw = st.session_state.get("poly_img")
             draw = ImageDraw.Draw(img_draw)
 
@@ -250,7 +256,6 @@ if st.session_state['file_in'] is not None and not release:
 
             value = img_xy(img_draw, key='point', on_click=add_point, cursor='crosshair')
 
-
         except Exception as e:
             st.error(f"Error preparing image coordinates: {str(e)}")
             
@@ -264,11 +269,9 @@ if st.session_state["run"]:
 
     if st.session_state["file_out"] is None:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_out:
-            temp_out.write(uploaded_file.read())
             st.session_state["file_out"] = temp_out.name
 
-    file_out_name = st.session_state["file_out"]
-    detector = StreamlitDetector(file_path=src, roi=roi, file_out_name=file_out_name, view_style=view_selection, configs=kwargs)
+    detector = StreamlitDetector(file_path=src, roi=roi, file_out_name=st.session_state["file_out"], view_style=view_selection, configs=kwargs)
     progress_bar = st.progress(0, text="Video processing in progress...")
 
     total_frames = st.session_state["studio"].source.frame_count
@@ -279,7 +282,7 @@ if st.session_state["run"]:
             st.session_state["run"] = False
             st.session_state["processed"] = True
             detector.system.studio.clean._clean_up()
-            import time
+            detector.writer.release()
             time.sleep(0.5)
             progress_bar.progress(100, text="Processing Complete! Select 'Play' to view results.")
             break
@@ -290,16 +293,14 @@ if st.session_state["run"]:
 
         percent_complete = int((frame_idx / total_frames * 100))
         progress_bar.progress(percent_complete, text=f"Processed {frame_idx}/{total_frames} ({percent_complete}%).")
+    st.rerun()
 
-    if play:
-        if not st.session_state["processed"]:
-            st.error("Cannot play until video is finished processing")
-        with st.session_state["view_window"]:
-            st.video(st.session_state["file_out"])
-
+if st.session_state["play"]:
+    with st.session_state["view_window"]:
+        st.video(st.session_state["file_out"])
 if release:
+    st.session_state["run"] = False
     st.session_state['reset'] = not st.session_state['reset']
-    temp_in.close()
     st.session_state['file_in'] = None
     st.session_state["file_out"] = None
     st.session_state["uploaded_file"] = None
@@ -312,5 +313,5 @@ if release:
     if st.session_state["studio"] is not None:
         st.session_state["studio"].clean._clean_up()
     for container in st.session_state['container_lst']:
-        container.empty()
+        container = container.empty()
     st.rerun()
