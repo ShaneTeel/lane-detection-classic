@@ -169,6 +169,13 @@ with st.sidebar:
     P_primer = st.number_input("Initial Confidence", min_value=0.0, max_value=0.99, value=0.5)
     process_noise = st.radio("Process Noise (Environment)", ["low", "medium", "high"], horizontal=True, index=1)
 
+    # Styling Configs
+    st.subheader("Rendering Style")
+    st.markdown("#### Slect a video rendering option")
+    st.caption("Render options only affects the frame design, not the lane line detection.")
+    view_options = ['inset', 'mosaic', "composite"]
+    view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
+
     system_configs = {
         "generator": feature_gen,
         "selector": feature_sel,
@@ -201,7 +208,7 @@ if st.session_state['file_in'] is not None and not release:
     st.write(" ")
 
     st.markdown("##### Viewer Options")
-    viewer_cols = st.columns(4)
+    viewer_cols = st.columns(3)
     with viewer_cols[0]:
         reset = st.button("Reset", type='secondary')
         if reset:
@@ -214,11 +221,8 @@ if st.session_state['file_in'] is not None and not release:
             st.session_state["play"] = False
             st.rerun()
 
-    with viewer_cols[1]:
-        view_options = ['inset', 'mosaic', "composite"]
-        view_selection = st.segmented_control("Render Options", view_options, label_visibility="collapsed", default=view_options[2])
         
-    with viewer_cols[2]:
+    with viewer_cols[1]:
         if st.session_state["roi"] is not None:
             run = st.button("Run Detection", type="secondary")
             if run:
@@ -226,7 +230,7 @@ if st.session_state['file_in'] is not None and not release:
         else:
             run = st.button("Run Detection", type="secondary", disabled=True, help="Select ROI First.")
 
-    with viewer_cols[3]:
+    with viewer_cols[2]:
         if st.session_state["processed"]:
             play = st.button("Play", type="secondary")
             if play:
