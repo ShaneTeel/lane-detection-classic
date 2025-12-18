@@ -8,7 +8,6 @@ version = "0.1.0"
 description = "Classic lane line detection system using traditional CV models and Kalman filtering"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
 authors = [
     {name = "Shane Teel"}
 ]
@@ -18,7 +17,6 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "License :: OSI Approved :: MIT Licence",
     "Operating System :: OS Independent"
 ]
 dependencies = [
