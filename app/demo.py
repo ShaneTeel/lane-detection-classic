@@ -50,6 +50,8 @@ if 'roi' not in st.session_state:
     st.session_state['roi'] = None
 
 # Run Attributes
+if "configs" not in st.session_state:
+    st.session_state["configs"] = None
 if "run" not in st.session_state:
     st.session_state["run"] = False
 if "detector" not in st.session_state:
@@ -294,32 +296,39 @@ if st.session_state["run"]:
     progress_bar = st.progress(0, text="Video processing in progress...")
     total_frames = st.session_state["studio"].source.frame_count
     frame_idx = 0
+    try:
+        while True:
+            ret, frame = detector.return_frame()
+            if not ret:
+                st.session_state["run"] = False
+                st.session_state["processed"] = True
+                st.session_state["detector"].system.studio.clean._clean_up()
+                st.session_state["detector"].writer.release()
+                time.sleep(0.5)
+                break
 
-    while True:
-        ret, frame = detector.return_frame()
-        if not ret:
-            st.session_state["run"] = False
-            st.session_state["processed"] = True
-            st.session_state["detector"].system.studio.clean._clean_up()
+            final = detector.process_frame(frame)
+            detector.write_frame(final)
+            frame_idx += 1
+
+            percent_complete = int((frame_idx / total_frames * 100))
+            progress_bar.progress(percent_complete, text=f"Processed {frame_idx}/{total_frames} ({percent_complete}%).")
+        st.rerun()
+    
+    except Exception as e:
+        st.error(f"Processing error: {e}")
+    
+    finally:
+        if st.session_state["detector"]:
             st.session_state["detector"].writer.release()
-            time.sleep(1.0)
-            progress_bar.progress(100, text="Processing Complete! Select 'Play' to view results.")
-            break
-
-        final = detector.process_frame(frame)
-        detector.write_frame(final)
-        frame_idx += 1
-
-        percent_complete = int((frame_idx / total_frames * 100))
-        progress_bar.progress(percent_complete, text=f"Processed {frame_idx}/{total_frames} ({percent_complete}%).")
-    st.rerun()
+            st.session_state["detector"].system.studio.clean._clean_up()
 
 if st.session_state["play"]:
     with st.session_state["view_window"]:
         st.video(st.session_state["file_out"])
 
 if release:
-    
+
     st.session_state['reset'] = not st.session_state['reset']
     for container in st.session_state['container_lst']:
         container.empty()
@@ -345,6 +354,7 @@ if release:
     st.session_state["view_window"] = None
     st.session_state['roi_frame'] = None
 
+    st.session_state["configs"] = None
     st.session_state["run"] = False
     st.session_state["detector"] = None
     st.session_state["processed"] = False
