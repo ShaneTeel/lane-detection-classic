@@ -10,6 +10,7 @@ from streamlit_image_coordinates import streamlit_image_coordinates as img_xy
 
 # Read / Write
 import tempfile
+import os
 
 # Required lane detection modules
 from lane_detection.image_geometry import ROIMasker
@@ -51,8 +52,8 @@ if 'roi' not in st.session_state:
 # Run Attributes
 if "run" not in st.session_state:
     st.session_state["run"] = False
-if "processor" not in st.session_state:
-    st.session_state["processor"] = None
+if "detector" not in st.session_state:
+    st.session_state["detector"] = None
 if "processed" not in st.session_state:
     st.session_state["processed"] = False
 if "play" not in st.session_state:
@@ -91,7 +92,8 @@ with cols0[1]:
 st.divider()
 
 # File Upload Block 
-if uploaded_file is not None:
+if uploaded_file is not None and uploaded_file != st.session_state["uploaded_file"]:
+    st.session_state["uploaded_file"] = uploaded_file
     st.spinner("Reading file...")
     if st.session_state["file_in"] is None:
         try:
@@ -99,12 +101,21 @@ if uploaded_file is not None:
                 temp_in.write(uploaded_file.read())
                 st.session_state["file_in"] = temp_in.name
                 temp_in.close()
-            studio = StudioManager(st.session_state["file_in"])
-            st.session_state["studio"] = studio
-            ret, frame = studio.return_frame()
-            st.session_state["roi_frame"] = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         except Exception as e:
             st.error(f"Error reading file: {str(e)}")
+
+        if st.session_state["file_out"] is None:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_out:
+                st.session_state["file_out"] = temp_out.name
+                temp_out.close()
+
+        if st.session_state["studio"] is not None:
+            st.session_state["studio"].clean._clean_up()
+
+        studio = StudioManager(st.session_state["file_in"])
+        st.session_state["studio"] = studio
+        ret, frame = studio.return_frame()
+        st.session_state["roi_frame"] = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
 with st.sidebar:
     st.title("System Configuration")
@@ -215,7 +226,7 @@ if st.session_state['file_in'] is not None and not release:
             st.session_state["roi"] = None
             st.session_state['click_points'].clear()
             st.session_state['poly_img'] = st.session_state['roi_frame'].copy()
-            st.session_state['processor'] = None
+            st.session_state['detector'] = None
             st.session_state["processed"] = False
             st.session_state["play"] = False
             st.rerun()
@@ -276,23 +287,22 @@ if st.session_state["run"]:
     roi = st.session_state["roi"]
     kwargs = st.session_state["configs"]
 
-    if st.session_state["file_out"] is None:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_out:
-            st.session_state["file_out"] = temp_out.name
+    if st.session_state["detector"] is None:
+        detector = StreamlitDetector(file_path=src, roi=roi, file_out_name=st.session_state["file_out"], view_style=view_selection, configs=kwargs)
+        st.session_state["detector"] = detector
 
-    detector = StreamlitDetector(file_path=src, roi=roi, file_out_name=st.session_state["file_out"], view_style=view_selection, configs=kwargs)
     progress_bar = st.progress(0, text="Video processing in progress...")
-
     total_frames = st.session_state["studio"].source.frame_count
     frame_idx = 0
+
     while True:
         ret, frame = detector.return_frame()
         if not ret:
             st.session_state["run"] = False
             st.session_state["processed"] = True
-            detector.system.studio.clean._clean_up()
-            detector.writer.release()
-            time.sleep(0.5)
+            st.session_state["detector"].system.studio.clean._clean_up()
+            st.session_state["detector"].writer.release()
+            time.sleep(1.0)
             progress_bar.progress(100, text="Processing Complete! Select 'Play' to view results.")
             break
 
@@ -309,19 +319,35 @@ if st.session_state["play"]:
         st.video(st.session_state["file_out"])
 
 if release:
-    st.session_state["run"] = False
+    
     st.session_state['reset'] = not st.session_state['reset']
-    st.session_state['file_in'] = None
-    st.session_state["file_out"] = None
+    for container in st.session_state['container_lst']:
+        container.empty()
+    st.session_state['container_lst'].clear()
+
+    if st.session_state["file_in"] and os.path.exists(st.session_state["file_in"]):
+        os.remove(st.session_state['file_in'])
+        st.session_state["file_in"] = None
+
+    if st.session_state["file_out"] and os.path.exists(st.session_state["file_out"]):
+        os.remove(st.session_state['file_out'])
+        st.session_state["file_out"] = None
+
     st.session_state["uploaded_file"] = None
-    st.session_state["processed"] = False
-    st.session_state["view_window"] = None
-    st.session_state['points'] = None
-    st.session_state["poly_img"] = None
-    st.session_state["roi"] = None
-    st.session_state["click_points"].clear()
+
     if st.session_state["studio"] is not None:
         st.session_state["studio"].clean._clean_up()
-    for container in st.session_state['container_lst']:
-        container = container.empty()
+
+    st.session_state['points'] = None
+    st.session_state["click_points"].clear()
+    st.session_state["poly_img"] = None
+    st.session_state["roi"] = None
+    st.session_state["view_window"] = None
+    st.session_state['roi_frame'] = None
+
+    st.session_state["run"] = False
+    st.session_state["detector"] = None
+    st.session_state["processed"] = False
+    st.session_state["play"] = False
+    
     st.rerun()
