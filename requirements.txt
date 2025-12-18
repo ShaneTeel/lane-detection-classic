@@ -1,7 +1,6 @@
 # Core dependencies
 opencv-python-headless>=4.10.0
 numpy>=2.2.6
-setuptools==80.9.0
 pydantic==2.12.5
 
 # Streamlit dependencies
