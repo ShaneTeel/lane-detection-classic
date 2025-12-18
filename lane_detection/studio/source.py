@@ -1,6 +1,5 @@
 import cv2
 import os
-import tempfile
 from lane_detection.utils import get_logger
 
 logger = get_logger(__name__)
