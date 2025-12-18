@@ -24,7 +24,6 @@ classifiers = [
 dependencies = [
     "numpy>=2.2.6",
     "opencv-python>=4.10.0",
-    "setuptools==80.9.0",
     "pydantic==2.12.5"
 ]
 
