@@ -25,7 +25,7 @@ Interactive demo for the [Classic Lane Line Detection](https://github.com/ShaneT
 ### Step-by-Step Instructions
 1. **Upload a Video File**
 2. **Select ROI** - Move cursor over image and click 4 points to define a region of interest
-3. **Configure System** - Adjust paramters in sidebar
+3. **Configure System** - Adjust parameters in sidebar
 4. **Run Detection** - Click `Run Detection` to process video
 5. **Play Video** - Click `Play` to play processed video
 
@@ -73,5 +73,5 @@ streamlit run ./app/demo.py
 
 ### Slow Processing
 - **RANSAC** - Assists in filtering outliers, but can slow processing speed significantly. If ROI, generator, and selector are configured appropriately, RANSAC may not be necessary
-- **BEV** - Disable for improved processing spped
+- **BEV** - Disable for improved processing speed
 - **Edge Detection** - Edge detection performs fewer convolutions than the thresholding feature generator.  
