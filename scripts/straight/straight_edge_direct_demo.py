@@ -1,10 +1,11 @@
 import numpy as np
 import logging
+import time
 
 from lane_detection.detection import DetectionSystem
 from lane_detection.utils import setup_logging, get_logger
 
-setup_logging(log_level=logging.WARNING,
+setup_logging(log_level=logging.INFO,
               log_dir="./logs",
               log_to_file=True,
               console_output=True)
@@ -21,9 +22,18 @@ def demo_video(src:str, roi:np.ndarray, **kwargs):
         roi=roi, 
         **kwargs
     )
-    eval = system.run("inset", stroke=False, fill=True)
 
-    print(eval)
+    n_frames = system.studio.source.frame_count
+
+    start = time.perf_counter()
+    eval = system.run("inset", stroke=False, fill=True)
+    end = time.perf_counter()
+
+    logger.info(f"\n{eval}")
+
+    td = end - start
+
+    logger.info(f"\nProcessed {n_frames} over the period of {td:.2f} seconds ({n_frames / td:.2f} FPS)")
 
 if __name__=="__main__":
     src = "media/in/lane1-straight.mp4"
