@@ -2,7 +2,7 @@ import numpy as np
 
 from lane_detection.detection import DetectionSystem
 from lane_detection.utils import get_logger
-from streamlit_writer import StreamlitWriter
+from .streamlit_writer import StreamlitWriter
 
 logger = get_logger(__name__)
 
