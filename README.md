@@ -14,7 +14,8 @@ A classical approach to lane line detection featuring:
 - [Methodology](#methodlogy)
 - [Trade-Offs](#trade-offs)
 - [Classical vs. Deep Learning](#classical-vs-deep-learning)
-- [To-Do](#to-do)
+- [Citation](#citation)
+- [License](#license)
 
 ## Demo / Examples
 ### Curved Road Example w/ Results
@@ -226,13 +227,27 @@ This project demonstrates **fundamental understanding** of classical computer vi
 - Edge deployments, or more to the point, when a GPU is not needed
 - Edge cases that challenge failure response
 
-**Coming Soon!**: Comparitive analysis with YOLOv8 implementation
-- Following implementation, author will update with a more thorough examination of the two approaches (classic vs deep learning).
+[Return to TOC](#table-of-contents)
 
+## Citation
+
+If you use this package or software, please cite it as follows:
+
+```bibtex
+@misc{ShaneTeel2026,
+    author = {Shane Teel},
+    title = {Lane-Detection Classic},
+    howpublished = {\url{https://github.com/ShaneTeel/lane-detection-classic}},
+    year = {2026},
+    note = {Version 0.1.0, accessed March 04, 2026}}
+```
 
 [Return to TOC](#table-of-contents)
 
-## To-Do
-- Add unit tests for critical modules (e.g., Kalman, RANSAC, OLS, BEV/Homography).
+## License
+
+This project is licensed under an All Rights Reserved [License](./LICENSE)
+
+**Copyright (c) 2026 Shane Teel**
 
 [Return to TOC](#table-of-contents)
