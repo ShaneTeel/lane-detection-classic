@@ -26,7 +26,7 @@ def demo_video(src:str, roi:np.ndarray, **kwargs):
     n_frames = system.studio.source.frame_count
 
     start = time.perf_counter()
-    eval = system.run(None, stroke=False, fill=True)
+    eval = system.run("mosaic", stroke=False, fill=True)
     end = time.perf_counter()
 
     logger.info(f"\n{eval}")
@@ -58,4 +58,5 @@ if __name__=="__main__":
         "lateral_range": 7.0,
         "resolution": 0.05
     }
+    
     demo_video(src, CURVED_LANE_VID_ROI, **CURVED_EDGE_DIRECT_KWARGS)
